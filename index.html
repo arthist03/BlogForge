@@ -1,0 +1,1879 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>BlogForge • Content Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <style>
+      :root {
+        --ink: #0c0c0c;
+        --ink2: #151515;
+        --ink3: #1f1f1f;
+        --rule: #2a2a2a;
+        --muted: #5f5f5f;
+        --ghost: #383838;
+        --accent: #e8c547;
+        --accent2: #c9a82c;
+        --red: #e84545;
+        --text: #d6d2ca;
+        --text2: #9a9488;
+        --r: 12px;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: "DM Sans", sans-serif;
+        font-weight: 300;
+        background: var(--ink);
+        color: var(--text);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      /* Ambient Background Glow */
+      body::after {
+        content: "";
+        position: fixed;
+        top: -10%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80vw;
+        height: 60vh;
+        background: radial-gradient(
+          circle,
+          rgba(232, 197, 71, 0.05) 0%,
+          transparent 70%
+        );
+        z-index: 0;
+        pointer-events: none;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        opacity: 0.03;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+
+      /* Masthead */
+      .masthead {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(12, 12, 12, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--rule);
+        padding: 0 32px;
+        display: flex;
+        align-items: stretch;
+        justify-content: space-between;
+      }
+      .masthead-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 24px 16px 0;
+        border-right: 1px solid rgba(42, 42, 42, 0.5);
+      }
+      .logo-mark {
+        width: 34px;
+        height: 34px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 2px 10px rgba(232, 197, 71, 0.2);
+      }
+      .logo-mark svg {
+        width: 18px;
+        height: 18px;
+      }
+      .masthead-title {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 2rem;
+        letter-spacing: 0.04em;
+        color: #fff;
+        line-height: 1;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      }
+      .masthead-sub {
+        font-size: 0.65rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-top: 1px;
+        font-weight: 500;
+      }
+      .masthead-right {
+        display: flex;
+        align-items: center;
+        padding: 16px 0 16px 24px;
+        gap: 12px;
+      }
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        animation: pg 2s ease-in-out infinite;
+      }
+      .status-dot.live {
+        background: #4ade80;
+        box-shadow: 0 0 8px #4ade80;
+      }
+      .status-dot.custom {
+        background: var(--accent);
+        box-shadow: 0 0 8px var(--accent);
+      }
+      @keyframes pg {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.4;
+          transform: scale(0.7);
+        }
+      }
+      .model-badge {
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        transition: color 0.3s;
+      }
+      .model-badge.live {
+        color: #4ade80;
+      }
+      .model-badge.custom {
+        color: var(--accent);
+      }
+
+      .btn-api {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: transparent;
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        padding: 5px 12px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.72rem;
+        color: var(--text2);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-left: 8px;
+      }
+      .btn-api:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        box-shadow: 0 0 10px rgba(232, 197, 71, 0.1);
+      }
+      .btn-api.active {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(232, 197, 71, 0.08);
+      }
+
+      /* Shell */
+      .shell {
+        position: relative;
+        z-index: 1;
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 60px 28px 100px;
+      }
+
+      /* Hero */
+      .hero-headline {
+        font-family: "DM Serif Display", serif;
+        font-size: clamp(2.5rem, 6vw, 4.2rem);
+        line-height: 1.06;
+        color: #fff;
+        margin-bottom: 15px;
+        letter-spacing: -0.01em;
+      }
+      .hero-headline em {
+        font-style: italic;
+        background: linear-gradient(135deg, var(--accent), #fff1b8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        padding-right: 5px;
+      }
+      .hero-sub {
+        font-size: 1rem;
+        color: var(--text2);
+        max-width: 480px;
+        line-height: 1.65;
+        margin-bottom: 48px;
+      }
+
+      /* Form */
+      .form-card {
+        background: rgba(21, 21, 21, 0.6);
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--rule);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 48px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        transition:
+          transform 0.3s ease,
+          border-color 0.3s ease;
+      }
+      .form-card:hover {
+        border-color: rgba(232, 197, 71, 0.2);
+      }
+      .form-row {
+        display: grid;
+        gap: 12px;
+        align-items: end;
+      }
+      .form-row.main {
+        grid-template-columns: 2fr 1fr 0.7fr auto;
+      }
+      @media (max-width: 700px) {
+        .form-row.main {
+          grid-template-columns: 1fr;
+        }
+        .url-field,
+        .btn-field {
+          grid-column: 1/-1;
+        }
+      }
+      .field label {
+        display: block;
+        font-size: 0.65rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .field input,
+      .field select {
+        width: 100%;
+        background: var(--ink3);
+        border: 1px solid var(--rule);
+        border-radius: var(--r);
+        padding: 12px 16px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.95rem;
+        font-weight: 400;
+        color: var(--text);
+        outline: none;
+        -webkit-appearance: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .field input:focus,
+      .field select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 4px rgba(232, 197, 71, 0.1);
+        transform: translateY(-1px);
+      }
+      .field input::placeholder {
+        color: var(--ghost);
+      }
+      .field select option {
+        background: var(--ink2);
+      }
+      .btn-generate {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: var(--ink);
+        font-family: "DM Sans", sans-serif;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: none;
+        border-radius: var(--r);
+        padding: 12px 26px;
+        cursor: pointer;
+        white-space: nowrap;
+        width: 100%;
+        box-shadow: 0 4px 15px rgba(232, 197, 71, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .btn-generate:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(232, 197, 71, 0.4);
+      }
+      .btn-generate:active {
+        transform: translateY(0);
+      }
+      .btn-generate:disabled {
+        background: var(--ghost);
+        box-shadow: none;
+        color: var(--muted);
+        cursor: not-allowed;
+        transform: none;
+      }
+      .form-hint {
+        margin-top: 16px;
+        font-size: 0.75rem;
+        color: var(--muted);
+        text-align: center;
+        letter-spacing: 0.04em;
+      }
+
+      /* Section header */
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--rule);
+      }
+      .section-title {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 1.6rem;
+        letter-spacing: 0.06em;
+        color: #fff;
+      }
+      .domain-badge {
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        background: rgba(232, 197, 71, 0.08);
+        padding: 4px 12px;
+        border-radius: 20px;
+        border: 1px solid rgba(232, 197, 71, 0.2);
+        margin-left: 12px;
+      }
+      .btn-dl-all {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: transparent;
+        border: 1px solid var(--rule);
+        border-radius: var(--r);
+        padding: 8px 16px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.8rem;
+        color: var(--text2);
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .btn-dl-all:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(232, 197, 71, 0.05);
+      }
+
+      /* Loading */
+      .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 20px;
+        gap: 20px;
+      }
+      .spinner-ring {
+        width: 48px;
+        height: 48px;
+        border: 3px solid var(--rule);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .loading-text {
+        font-family: "DM Serif Display", serif;
+        font-size: 1.3rem;
+        color: #fff;
+        letter-spacing: 0.02em;
+      }
+      .loading-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 8px;
+        align-items: center;
+      }
+      .loading-step {
+        font-size: 0.85rem;
+        color: var(--muted);
+        opacity: 0;
+        transform: translateY(10px);
+        animation: slideUpFade 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+      .loading-step.active {
+        color: var(--accent);
+        font-weight: 500;
+      }
+      @keyframes slideUpFade {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Cards */
+      .blog-card {
+        background: var(--ink2);
+        border: 1px solid var(--rule);
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 16px;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        opacity: 0;
+        transform: translateY(20px);
+        animation: slideUpFade 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+      .blog-card:hover {
+        border-color: rgba(232, 197, 71, 0.3);
+        transform: translateY(-3px);
+        box-shadow:
+          0 8px 24px rgba(0, 0, 0, 0.4),
+          0 0 15px rgba(232, 197, 71, 0.05);
+      }
+      .card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 24px;
+        cursor: pointer;
+        background: linear-gradient(
+          135deg,
+          rgba(31, 31, 31, 0.6),
+          rgba(21, 21, 21, 0.8)
+        );
+      }
+      .card-header-left {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        flex: 1;
+        min-width: 0;
+      }
+      .day-pill {
+        flex-shrink: 0;
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 0.85rem;
+        letter-spacing: 0.1em;
+        background: var(--accent);
+        color: var(--ink);
+        padding: 4px 12px;
+        border-radius: 6px;
+        margin-top: 2px;
+        box-shadow: 0 2px 8px rgba(232, 197, 71, 0.3);
+      }
+      .card-title {
+        font-family: "DM Serif Display", serif;
+        font-size: 1.2rem;
+        color: #fff;
+        line-height: 1.3;
+        margin-bottom: 6px;
+      }
+      .card-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .card-meta-item {
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+      .card-meta-item.seo {
+        color: #4ade80;
+        font-weight: 500;
+      }
+      .tag-chip {
+        display: inline-block;
+        font-size: 0.65rem;
+        letter-spacing: 0.05em;
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text2);
+        border: 1px solid var(--rule);
+        padding: 3px 9px;
+        border-radius: 20px;
+      }
+      .card-btns {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+        align-items: center;
+      }
+      .btn-sm {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--ink);
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.75rem;
+        color: var(--text2);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+      .btn-sm:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(232, 197, 71, 0.05);
+      }
+      .btn-sm.primary {
+        background: var(--accent);
+        color: var(--ink);
+        border-color: var(--accent);
+        font-weight: 600;
+      }
+      .btn-sm.primary:hover {
+        background: var(--accent2);
+        color: var(--ink);
+      }
+      .btn-sm.success {
+        border-color: #4ade80;
+        color: #4ade80;
+        background: rgba(74, 222, 128, 0.1);
+      }
+      .chevron {
+        font-size: 0.8rem;
+        color: var(--muted);
+        transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        margin-left: 4px;
+      }
+      .chevron.open {
+        transform: rotate(180deg);
+        color: var(--accent);
+      }
+      .card-preview {
+        padding: 0 24px 24px;
+        font-size: 0.9rem;
+        color: var(--text2);
+        line-height: 1.7;
+        border-top: 1px solid var(--rule);
+        background: var(--ink2);
+      }
+      .card-preview.hidden {
+        display: none;
+      }
+      .preview-excerpt {
+        padding-top: 20px;
+      }
+      .preview-excerpt p {
+        margin-bottom: 12px;
+      }
+
+      /* Error */
+      .error-box {
+        background: rgba(232, 69, 69, 0.07);
+        border: 1px solid rgba(232, 69, 69, 0.3);
+        border-radius: 12px;
+        padding: 20px 24px;
+        color: #f87171;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        box-shadow: 0 4px 12px rgba(232, 69, 69, 0.1);
+      }
+
+      /* Toast */
+      #toast {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: var(--text);
+        color: var(--ink);
+        padding: 10px 24px;
+        border-radius: 30px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        z-index: 9999;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      }
+      #toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* API WIZARD MODAL */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+      .modal-backdrop.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .modal-panel {
+        background: var(--ink2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        width: 100%;
+        max-width: 480px;
+        overflow: hidden;
+        transform: translateY(20px) scale(0.95);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      }
+      .modal-backdrop.open .modal-panel {
+        transform: translateY(0) scale(1);
+      }
+      .modal-header {
+        padding: 24px 28px;
+        border-bottom: 1px solid var(--rule);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .modal-title {
+        font-family: "DM Serif Display", serif;
+        font-size: 1.4rem;
+        color: #fff;
+      }
+      .modal-close {
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: color 0.2s;
+      }
+      .modal-close:hover {
+        color: var(--red);
+      }
+      .modal-field {
+        padding: 20px 28px 0;
+      }
+      .modal-field label {
+        display: block;
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .modal-field select,
+      .modal-field input {
+        width: 100%;
+        background: var(--ink3);
+        border: 1px solid var(--rule);
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.95rem;
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.3s;
+      }
+      .modal-field select:focus,
+      .modal-field input:focus {
+        border-color: var(--accent);
+      }
+      .field-hint {
+        font-size: 0.75rem;
+        color: var(--muted);
+        margin-top: 8px;
+        line-height: 1.5;
+      }
+      .key-status {
+        margin: 24px 28px 0;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .key-status.default {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--rule);
+        color: var(--text2);
+      }
+      .key-status.set {
+        background: rgba(74, 222, 128, 0.08);
+        border: 1px solid rgba(74, 222, 128, 0.2);
+        color: #4ade80;
+      }
+      .modal-actions {
+        padding: 24px 28px;
+        display: flex;
+        gap: 12px;
+        margin-top: 10px;
+      }
+      .modal-btn {
+        flex: 1;
+        padding: 12px;
+        border-radius: 10px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+        border: none;
+      }
+      .modal-btn.reset {
+        background: transparent;
+        border: 1px solid var(--rule);
+        color: var(--text2);
+      }
+      .modal-btn.reset:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+      }
+      .modal-btn.save {
+        background: var(--accent);
+        color: var(--ink);
+      }
+      .modal-btn.save:hover {
+        background: var(--accent2);
+        transform: translateY(-1px);
+      }
+
+      /* READER MODAL */
+      .reader-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 20px 12px;
+        overflow-y: auto;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+      }
+      .reader-backdrop.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .reader-panel {
+        background: #fdfbf7;
+        border-radius: 18px;
+        width: 100%;
+        max-width: 800px;
+        min-height: 60vh;
+        position: relative;
+        overflow: hidden;
+        transform: translateY(40px);
+        transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      }
+      .reader-backdrop.open .reader-panel {
+        transform: translateY(0);
+      }
+      .reader-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(253, 251, 247, 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid #e8e4d9;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .reader-topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+      .reader-day-badge {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 0.85rem;
+        letter-spacing: 0.1em;
+        background: #0c0c0c;
+        color: #e8c547;
+        padding: 4px 10px;
+        border-radius: 6px;
+        flex-shrink: 0;
+      }
+      .reader-topbar-title {
+        font-family: "Playfair Display", serif;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .reader-topbar-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .reader-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #f0ebe1;
+        border: 1px solid #e8e4d9;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #444;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .reader-btn:hover {
+        background: #e8c547;
+        border-color: #e8c547;
+        color: #0c0c0c;
+      }
+      .reader-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: #f0ebe1;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: #555;
+        transition: all 0.2s;
+      }
+      .reader-close:hover {
+        background: #e84545;
+        color: #fff;
+      }
+      #reader-progress {
+        position: sticky;
+        top: 57px;
+        z-index: 9;
+        height: 3px;
+        background: transparent;
+      }
+      #reader-progress-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #e8c547, #c9a82c);
+        transition: width 0.1s ease-out;
+      }
+      .reader-hero {
+        position: relative;
+        width: 100%;
+        height: 400px;
+        overflow: hidden;
+      }
+      .reader-hero img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .reader-hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to bottom,
+          transparent 20%,
+          rgba(0, 0, 0, 0.85)
+        );
+      }
+      .reader-hero-text {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 40px 48px;
+      }
+      .reader-hero-text h1 {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(1.8rem, 4vw, 2.8rem);
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.15;
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        margin-bottom: 16px;
+      }
+      .reader-hero-pills {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .reader-pill {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        padding: 4px 14px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+      .reader-pill.gold {
+        background: #e8c547;
+        color: #0c0c0c;
+        font-weight: 600;
+        border-color: #e8c547;
+      }
+      .reader-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 24px 48px 0;
+      }
+      .reader-tag {
+        font-size: 0.75rem;
+        color: #8b6914;
+        background: #fdf6df;
+        border: 1px solid #e8c547;
+        padding: 4px 12px;
+        border-radius: 20px;
+      }
+      .reader-body {
+        padding: 40px 48px 64px;
+        color: #1a1916;
+      }
+      .reader-meta-desc {
+        font-size: 0.95rem;
+        color: #6b6251;
+        line-height: 1.7;
+        padding: 18px 24px;
+        border-radius: 12px;
+        background: #f5f1e6;
+        border-left: 4px solid #e8c547;
+        margin-bottom: 40px;
+        font-style: italic;
+      }
+      .reader-article h2 {
+        font-family: "Playfair Display", serif;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #111;
+        line-height: 1.3;
+        margin: 56px 0 20px;
+        padding-left: 16px;
+        border-left: 4px solid #e8c547;
+      }
+      .reader-article h3 {
+        font-family: "Playfair Display", serif;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #222;
+        margin: 36px 0 12px;
+        line-height: 1.4;
+      }
+      .reader-article p {
+        font-family: "Lora", serif;
+        font-size: 1.1rem;
+        line-height: 1.9;
+        color: #2a2820;
+        margin-bottom: 1.5rem;
+      }
+      .reader-article strong {
+        color: #111;
+        font-weight: 700;
+      }
+      .reader-article em {
+        font-style: italic;
+        color: #5a5448;
+      }
+      .reader-img-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 16px;
+        margin: 40px 0;
+      }
+      .reader-img-item img {
+        width: 100%;
+        aspect-ratio: 4/3;
+        object-fit: cover;
+        border-radius: 12px;
+        display: block;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        transition: transform 0.3s ease;
+      }
+      .reader-img-item:hover img {
+        transform: scale(1.02);
+      }
+      .reader-img-caption {
+        font-size: 0.75rem;
+        color: #887f6e;
+        margin-top: 8px;
+        font-style: italic;
+        line-height: 1.5;
+        text-align: center;
+      }
+      .reader-prompts {
+        margin-top: 64px;
+        padding: 32px;
+        background: #f5f1e6;
+        border-radius: 16px;
+        border: 1px solid #e8e4d9;
+      }
+      .reader-prompts-title {
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #9b8440;
+        font-weight: 700;
+        margin-bottom: 20px;
+      }
+      .reader-prompt-row {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        padding: 12px 0;
+        border-bottom: 1px solid #e8e4d9;
+        font-size: 0.9rem;
+      }
+      .reader-prompt-row:last-child {
+        border-bottom: none;
+      }
+      .reader-prompt-pos {
+        min-width: 140px;
+        flex-shrink: 0;
+        color: #9b6e14;
+        font-weight: 600;
+        font-size: 0.8rem;
+        background: #fdf6df;
+        padding: 2px 8px;
+        border-radius: 6px;
+        text-align: center;
+      }
+      .reader-prompt-text {
+        color: #5a5040;
+        line-height: 1.6;
+      }
+      @media (max-width: 600px) {
+        .shell {
+          padding: 40px 20px 80px;
+        }
+        .reader-hero {
+          height: 260px;
+        }
+        .reader-hero-text {
+          padding: 24px;
+        }
+        .reader-hero-text h1 {
+          font-size: 1.5rem;
+        }
+        .reader-tags,
+        .reader-body {
+          padding-left: 24px;
+          padding-right: 24px;
+        }
+        .card-header {
+          flex-direction: column;
+        }
+        .card-btns {
+          width: 100%;
+          justify-content: space-between;
+          margin-top: 10px;
+        }
+        .masthead {
+          padding: 0 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="masthead">
+      <div class="masthead-left">
+        <div class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M4 6h16M4 10h10M4 14h12M4 18h8"
+              stroke="#0c0c0c"
+              stroke-width="2.2"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+        <div>
+          <div class="masthead-title">BlogForge</div>
+          <div class="masthead-sub">Content Engine</div>
+        </div>
+      </div>
+      <div class="masthead-right">
+        <div class="status-dot live" id="status-dot"></div>
+        <span class="model-badge live" id="model-badge">Groq · LLaMA 3.3</span>
+        <button class="btn-api" id="api-toggle-btn" onclick="openApiModal()">
+          <i class="fa-solid fa-key"></i> API
+        </button>
+      </div>
+    </header>
+
+    <main class="shell">
+      <h1 class="hero-headline">Your blogs.<br /><em>One URL.</em> Done.</h1>
+      <p class="hero-sub">
+        Paste any website — get SEO-ready, domain-optimized, long-form content
+        styled after the world's best publications.
+      </p>
+
+      <div class="form-card">
+        <div class="form-row main">
+          <div class="field url-field">
+            <label>Website URL</label>
+            <input id="url" type="url" placeholder="https://example.com" />
+          </div>
+          <div class="field">
+            <label>Tone</label>
+            <select id="tone">
+              <option value="Professional">Professional</option>
+              <option value="Creative">Creative</option>
+              <option value="Casual">Casual</option>
+              <option value="Authoritative">Authoritative</option>
+              <option value="Storytelling" selected>Storytelling</option>
+              <option value="Inspirational">Inspirational</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Days</label>
+            <select id="days">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7" selected>7</option>
+            </select>
+          </div>
+          <div class="field btn-field">
+            <button class="btn-generate" id="gen-btn" onclick="generateBlogs()">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Generate
+            </button>
+          </div>
+        </div>
+        <p class="form-hint">
+          ⏱ Domain auto-detected · Strategy applied from top-tier blogs · Rate
+          limits handled
+        </p>
+      </div>
+
+      <div id="results" style="display: none">
+        <div class="section-header">
+          <div style="display: flex; align-items: center">
+            <span class="section-title" id="results-title"
+              >Your Content Series</span
+            >
+            <span
+              class="domain-badge"
+              id="domain-badge"
+              style="display: none"
+            ></span>
+          </div>
+          <button class="btn-dl-all" onclick="downloadAll()">
+            <i class="fa-solid fa-file-zipper"></i> Download All
+          </button>
+        </div>
+        <div id="blogs-container"></div>
+      </div>
+    </main>
+
+    <div id="toast"></div>
+
+    <div class="modal-backdrop" id="api-modal" onclick="closeApiModal(event)">
+      <div class="modal-panel" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <span class="modal-title">API Configuration</span>
+          <button class="modal-close" onclick="closeApiModalDirect()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="modal-field">
+          <label>Provider</label>
+          <select id="api-provider" onchange="onProviderChange()">
+            <option value="groq">Groq (Free Tier)</option>
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="modal-field" id="base-url-container" style="display: none">
+          <label>Base URL</label>
+          <input
+            type="url"
+            id="api-base-url"
+            placeholder="https://api.together.xyz/v1"
+          />
+          <div class="field-hint">
+            Required for custom providers (OpenAI compatible).
+          </div>
+        </div>
+
+        <div class="modal-field">
+          <label>Model</label>
+          <select id="api-model" onchange="onModelChange()"></select>
+          <input
+            type="text"
+            id="custom-model-input"
+            placeholder="e.g., openai/mistral-7b"
+            style="display: none; margin-top: 10px"
+          />
+          <div class="field-hint" id="model-hint">
+            Select a provider to see available models
+          </div>
+        </div>
+
+        <div class="modal-field">
+          <label>API Key</label>
+          <input type="password" id="api-key" placeholder="sk-... or gsk_..." />
+          <div class="field-hint">
+            Your key is stored locally in your browser — never sent to our
+            servers, only to the provider directly.
+          </div>
+        </div>
+
+        <div class="key-status default" id="key-status">
+          <i class="fa-solid fa-circle-info"></i> Using server default (Groq
+          free tier)
+        </div>
+
+        <div class="modal-actions">
+          <button class="modal-btn reset" onclick="resetApiConfig()">
+            <i class="fa-solid fa-rotate-left"></i> Reset to Default
+          </button>
+          <button class="modal-btn save" onclick="saveApiConfig()">
+            <i class="fa-solid fa-check"></i> Save & Apply
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="reader-backdrop"
+      id="reader-backdrop"
+      onclick="closeReader(event)"
+    >
+      <div
+        class="reader-panel"
+        id="reader-panel"
+        onclick="event.stopPropagation()"
+      >
+        <div class="reader-topbar">
+          <div class="reader-topbar-left">
+            <span class="reader-day-badge" id="reader-day-badge">DAY 1</span>
+            <span class="reader-topbar-title" id="reader-topbar-title"></span>
+          </div>
+          <div class="reader-topbar-actions">
+            <button class="reader-btn" onclick="readerCopy()">
+              <i class="fa-regular fa-copy"></i> Copy
+            </button>
+            <button class="reader-btn" onclick="readerDownload()">
+              <i class="fa-solid fa-download"></i> .md
+            </button>
+            <button class="reader-close" onclick="closeReaderDirect()">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+        <div id="reader-progress"><div id="reader-progress-bar"></div></div>
+        <div id="reader-content"></div>
+      </div>
+    </div>
+
+    <script>
+      // ── State ──────────────────────────────────────────────────────────
+      let allBlogs = [];
+      let currentReaderIdx = -1;
+
+      // API config (persisted in localStorage)
+      let apiConfig = {
+        provider: "groq",
+        model: "llama-3.3-70b-versatile",
+        apiKey: null,
+        baseUrl: null,
+        isCustom: false,
+      };
+
+      const PROVIDER_LABELS = {
+        groq: "Groq",
+        openai: "OpenAI",
+        anthropic: "Anthropic",
+        deepseek: "DeepSeek",
+        other: "Custom",
+      };
+
+      // Load saved config
+      try {
+        const saved = JSON.parse(
+          localStorage.getItem("blogforge_api") || "null",
+        );
+        if (saved) {
+          apiConfig = saved;
+          updateMastheadBadge();
+        }
+      } catch (e) {}
+
+      // ── Helpers ────────────────────────────────────────────────────────
+      function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2400);
+      }
+
+      function inlineMd(raw) {
+        return raw
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
+          .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+          .replace(/\*(.+?)\*/g, "<em>$1</em>");
+      }
+      function mdToHtml(raw) {
+        if (!raw) return "";
+        return raw
+          .split("\n")
+          .map((line) => {
+            const s = line.trimEnd();
+            if (s.startsWith("### ")) return `<h3>${inlineMd(s.slice(4))}</h3>`;
+            if (s.startsWith("## ")) return `<h2>${inlineMd(s.slice(3))}</h2>`;
+            if (s.startsWith("# ")) return `<h2>${inlineMd(s.slice(2))}</h2>`;
+            if (s === "") return "";
+            return `<p>${inlineMd(s)}</p>`;
+          })
+          .join("\n");
+      }
+
+      function promptToQuery(p) {
+        const stop = new Set([
+          "a",
+          "an",
+          "the",
+          "of",
+          "in",
+          "on",
+          "with",
+          "and",
+          "or",
+          "for",
+          "to",
+          "at",
+          "is",
+          "are",
+          "was",
+          "were",
+          "photo",
+          "image",
+          "illustration",
+          "showing",
+          "person",
+          "people",
+          "background",
+          "beautiful",
+          "stunning",
+          "sitting",
+          "standing",
+          "featuring",
+          "depicting",
+        ]);
+        const kw = ((p || "").toLowerCase().match(/[a-z]+/g) || []).filter(
+          (w) => !stop.has(w) && w.length > 3,
+        );
+        return kw.slice(0, 3).join(",") || "nature";
+      }
+      function imgUrl(p, w, h, sig) {
+        return `https://source.unsplash.com/${w}x${h}/?${promptToQuery(p)}&sig=${sig}`;
+      }
+
+      function blogToMd(b) {
+        const imgs = (b.inline_images || [])
+          .map((i) => `  - [${i.position}] ${i.prompt}`)
+          .join("\n");
+        return `---\ntitle: ${b.title}\nslug: ${b.slug || ""}\nfocus_keyword: ${b.focus_keyword || ""}\nmeta_description: ${b.meta_description || ""}\nread_time: ${b.read_time || ""}\nseo_score: ${b.seo_score || ""}\ntags: ${(b.tags || []).join(", ")}\nhero_image_prompt: ${b.hero_image_prompt || ""}\ninline_image_prompts:\n${imgs}\n---\n\n${b.content || ""}`;
+      }
+
+      // ── API Modal ─────────────────────────────────────────────────────
+
+      async function onProviderChange() {
+        const prov = document.getElementById("api-provider").value;
+        const modelSel = document.getElementById("api-model");
+        const hint = document.getElementById("model-hint");
+        const customInput = document.getElementById("custom-model-input");
+        const baseUrlContainer = document.getElementById("base-url-container");
+
+        // Handle "Other" Custom Provider immediately
+        if (prov === "other") {
+          baseUrlContainer.style.display = "block";
+          modelSel.innerHTML = `<option value="custom">-- Custom Model --</option>`;
+          modelSel.value = "custom";
+          hint.textContent =
+            "Enter your model name below. Tip: Prefix with openai/ if compatible.";
+          onModelChange();
+          return;
+        }
+
+        // Standard Providers
+        baseUrlContainer.style.display = "none";
+        hint.innerHTML =
+          '<i class="fa-solid fa-circle-notch fa-spin"></i> Fetching models from API...';
+        modelSel.innerHTML = '<option value="">Loading...</option>';
+        customInput.style.display = "none";
+
+        try {
+          const res = await fetch(`/api/models/${prov}`);
+          const data = await res.json();
+
+          if (!res.ok) throw new Error(data.error || "Unknown API error");
+
+          const models = data.models || [];
+
+          let optionsHtml = models
+            .map((m) => `<option value="${m}">${m}</option>`)
+            .join("");
+          optionsHtml += `<option value="custom">-- Other (Custom Model) --</option>`;
+          modelSel.innerHTML = optionsHtml;
+
+          if (prov === apiConfig.provider) {
+            if (models.includes(apiConfig.model)) {
+              modelSel.value = apiConfig.model;
+            } else {
+              modelSel.value = "custom";
+              customInput.value = apiConfig.model;
+            }
+          }
+
+          hint.textContent = `${models.length} models fetched from API for ${PROVIDER_LABELS[prov]}`;
+        } catch (e) {
+          modelSel.innerHTML = `<option value="custom">-- Other (Custom Model) --</option>`;
+          hint.textContent = `Failed to fetch from API. Please enter model manually.`;
+          document.getElementById("custom-model-input").value =
+            apiConfig.model || "";
+        }
+
+        onModelChange();
+      }
+
+      function onModelChange() {
+        const modelSel = document.getElementById("api-model").value;
+        const customInput = document.getElementById("custom-model-input");
+        if (modelSel === "custom") {
+          customInput.style.display = "block";
+        } else {
+          customInput.style.display = "none";
+        }
+      }
+
+      async function openApiModal() {
+        document.getElementById("api-provider").value = apiConfig.provider;
+        await onProviderChange();
+
+        document.getElementById("api-key").value = apiConfig.apiKey || "";
+
+        if (apiConfig.provider === "other") {
+          document.getElementById("api-base-url").value =
+            apiConfig.baseUrl || "";
+          document.getElementById("custom-model-input").value =
+            apiConfig.model || "";
+        }
+
+        updateKeyStatus();
+        document.getElementById("api-modal").classList.add("open");
+      }
+
+      function closeApiModal(e) {
+        if (e.target === document.getElementById("api-modal"))
+          closeApiModalDirect();
+      }
+
+      function closeApiModalDirect() {
+        document.getElementById("api-modal").classList.remove("open");
+      }
+
+      function saveApiConfig() {
+        const prov = document.getElementById("api-provider").value;
+        let model = document.getElementById("api-model").value;
+
+        if (model === "custom") {
+          model = document.getElementById("custom-model-input").value.trim();
+          if (!model) {
+            showToast("Please enter a custom model name");
+            return;
+          }
+        }
+
+        const key = document.getElementById("api-key").value.trim();
+        let baseUrl = null;
+        if (prov === "other") {
+          baseUrl = document.getElementById("api-base-url").value.trim();
+        }
+
+        apiConfig = {
+          provider: prov,
+          model: model,
+          apiKey: key || null,
+          baseUrl: baseUrl || null,
+          isCustom: !!key || prov === "other",
+        };
+
+        localStorage.setItem("blogforge_api", JSON.stringify(apiConfig));
+        updateMastheadBadge();
+        updateKeyStatus();
+        closeApiModalDirect();
+        showToast(`Switched to ${PROVIDER_LABELS[prov]} · ${model}`);
+      }
+
+      function resetApiConfig() {
+        apiConfig = {
+          provider: "groq",
+          model: "llama-3.3-70b-versatile",
+          apiKey: null,
+          baseUrl: null,
+          isCustom: false,
+        };
+        localStorage.removeItem("blogforge_api");
+        document.getElementById("api-provider").value = "groq";
+        onProviderChange();
+        document.getElementById("api-key").value = "";
+        updateMastheadBadge();
+        updateKeyStatus();
+        showToast("Reset to default Groq");
+      }
+
+      function updateMastheadBadge() {
+        const dot = document.getElementById("status-dot");
+        const badge = document.getElementById("model-badge");
+        const btn = document.getElementById("api-toggle-btn");
+        const label = PROVIDER_LABELS[apiConfig.provider] || apiConfig.provider;
+        const shortModel = apiConfig.model
+          .split("/")
+          .pop()
+          .split("-")
+          .slice(0, 3)
+          .join("-");
+
+        badge.textContent = `${label} · ${shortModel}`;
+
+        if (apiConfig.isCustom) {
+          dot.className = "status-dot custom";
+          badge.className = "model-badge custom";
+          btn.classList.add("active");
+        } else {
+          dot.className = "status-dot live";
+          badge.className = "model-badge live";
+          btn.classList.remove("active");
+        }
+      }
+
+      function updateKeyStatus() {
+        const el = document.getElementById("key-status");
+        if (apiConfig.isCustom) {
+          el.className = "key-status set";
+          el.innerHTML = `<i class="fa-solid fa-circle-check"></i> Custom key active — ${PROVIDER_LABELS[apiConfig.provider]} · ${apiConfig.model}`;
+        } else {
+          el.className = "key-status default";
+          el.innerHTML = `<i class="fa-solid fa-circle-info"></i> Using server default (Groq free tier)`;
+        }
+      }
+
+      updateMastheadBadge();
+
+      // ── Reader ─────────────────────────────────────────────────────────
+      function openReader(idx) {
+        currentReaderIdx = idx;
+        const b = allBlogs[idx];
+        if (!b) return;
+        const heroUrl = imgUrl(
+          b.hero_image_prompt || "writing desk",
+          1200,
+          680,
+          idx * 100,
+        );
+        const tags = (b.tags || [])
+          .map((t) => `<span class="reader-tag">#${t}</span>`)
+          .join(" ");
+        const imgs = b.inline_images || [];
+        const imgGrid = imgs.length
+          ? `<div class="reader-img-grid">${imgs.map((img, i) => `<div class="reader-img-item"><img src="${imgUrl(img.prompt, 600, 400, idx * 100 + i + 1)}" alt="${img.alt_text || img.prompt}" loading="lazy"><div class="reader-img-caption">${img.prompt}</div></div>`).join("")}</div>`
+          : "";
+        const prompts = imgs
+          .map(
+            (img) =>
+              `<div class="reader-prompt-row"><span class="reader-prompt-pos">${img.position}</span><span class="reader-prompt-text">${img.prompt}</span></div>`,
+          )
+          .join("");
+
+        document.getElementById("reader-day-badge").textContent =
+          `DAY ${b.day}`;
+        document.getElementById("reader-topbar-title").textContent = b.title;
+        document.getElementById("reader-content").innerHTML = `
+    <div class="reader-hero"><img src="${heroUrl}" alt="${b.hero_image_prompt || ""}"><div class="reader-hero-overlay"></div><div class="reader-hero-text"><h1>${b.title}</h1><div class="reader-hero-pills"><span class="reader-pill">⏱ ${b.read_time || ""}</span><span class="reader-pill">🔑 ${b.focus_keyword || ""}</span><span class="reader-pill gold">SEO ${b.seo_score || "–"}/100</span></div></div></div>
+    <div class="reader-tags">${tags}</div>
+    <div class="reader-body"><div class="reader-meta-desc">${b.meta_description || ""}</div><div class="reader-article">${mdToHtml(b.content || "")}</div>${imgGrid}${prompts ? `<div class="reader-prompts"><div class="reader-prompts-title">📸 Image Prompts</div>${prompts}</div>` : ""}</div>`;
+
+        const bd = document.getElementById("reader-backdrop");
+        bd.classList.add("open");
+        bd.scrollTop = 0;
+        document.body.style.overflow = "hidden";
+
+        const panel = document.getElementById("reader-panel");
+        bd.onscroll = () => {
+          const panelRect = panel.getBoundingClientRect();
+          const viewHeight = window.innerHeight;
+          const scrollable = panelRect.height - viewHeight;
+          if (scrollable > 0) {
+            const scrolled = Math.max(0, -panelRect.top + 40);
+            let progress = (scrolled / scrollable) * 100;
+            document.getElementById("reader-progress-bar").style.width =
+              Math.min(100, Math.max(0, progress)) + "%";
+          }
+        };
+      }
+      function closeReader(e) {
+        if (e.target === document.getElementById("reader-backdrop"))
+          closeReaderDirect();
+      }
+      function closeReaderDirect() {
+        document.getElementById("reader-backdrop").classList.remove("open");
+        document.body.style.overflow = "";
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeReaderDirect();
+          closeApiModalDirect();
+        }
+      });
+      function readerCopy() {
+        if (currentReaderIdx >= 0)
+          navigator.clipboard
+            .writeText(blogToMd(allBlogs[currentReaderIdx]))
+            .then(() => showToast("Copied!"));
+      }
+      function readerDownload() {
+        if (currentReaderIdx >= 0) downloadBlog(currentReaderIdx);
+      }
+
+      // ── Render cards ──────────────────────────────────────────────────
+      function renderBlogs(blogs, domain, strategyRef) {
+        allBlogs = blogs;
+        const c = document.getElementById("blogs-container");
+        c.innerHTML = "";
+
+        if (domain) {
+          const db = document.getElementById("domain-badge");
+          db.textContent = `${domain} · styled after ${strategyRef}`;
+          db.style.display = "inline-block";
+        }
+
+        blogs.forEach((b, idx) => {
+          const tags = (b.tags || [])
+            .map((t) => `<span class="tag-chip">#${t}</span>`)
+            .join(" ");
+          const excerpt = (b.content || "")
+            .replace(/#{1,3}\s/g, "")
+            .replace(/\*\*/g, "")
+            .replace(/\*/g, "")
+            .trim()
+            .slice(0, 220);
+          const card = document.createElement("div");
+          card.className = "blog-card";
+          card.style.animationDelay = `${idx * 0.15}s`;
+          card.innerHTML = `
+      <div class="card-header" onclick="togglePreview(${idx})">
+        <div class="card-header-left">
+          <span class="day-pill">DAY ${b.day}</span>
+          <div>
+            <div class="card-title">${b.title}</div>
+            <div class="card-meta">
+              <span class="card-meta-item">⏱ ${b.read_time || ""}</span><span class="card-meta-item">·</span>
+              <span class="card-meta-item seo">SEO ${b.seo_score || "–"}/100</span><span class="card-meta-item">·</span>${tags}
+            </div>
+          </div>
+        </div>
+        <div class="card-btns">
+          <button class="btn-sm" onclick="event.stopPropagation();copyBlog(${idx})" id="copy-btn-${idx}"><i class="fa-regular fa-copy"></i> Copy</button>
+          <button class="btn-sm" onclick="event.stopPropagation();downloadBlog(${idx})"><i class="fa-solid fa-download"></i> .md</button>
+          <button class="btn-sm primary" onclick="event.stopPropagation();openReader(${idx})"><i class="fa-regular fa-eye"></i> Read</button>
+          <i class="fa-solid fa-chevron-down chevron" id="chev-${idx}"></i>
+        </div>
+      </div>
+      <div class="card-preview hidden" id="preview-${idx}"><div class="preview-excerpt"><p>${excerpt}${excerpt.length >= 220 ? "…" : ""}</p><button class="btn-sm primary" style="margin-top:10px" onclick="openReader(${idx})"><i class="fa-regular fa-eye"></i> Read Full Blog</button></div></div>`;
+          c.appendChild(card);
+        });
+
+        document.getElementById("results").style.display = "block";
+        document
+          .getElementById("results")
+          .scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function togglePreview(idx) {
+        document.getElementById(`preview-${idx}`).classList.toggle("hidden");
+        document.getElementById(`chev-${idx}`).classList.toggle("open");
+      }
+
+      // ── Actions ───────────────────────────────────────────────────────
+      function copyBlog(idx) {
+        const b = allBlogs[idx];
+        if (!b) return;
+        navigator.clipboard.writeText(blogToMd(b)).then(() => {
+          const btn = document.getElementById(`copy-btn-${idx}`);
+          const orig = btn.innerHTML;
+          btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+          btn.classList.add("success");
+          showToast("Copied!");
+          setTimeout(() => {
+            btn.innerHTML = orig;
+            btn.classList.remove("success");
+          }, 2000);
+        });
+      }
+      function downloadBlog(idx) {
+        const b = allBlogs[idx];
+        if (!b) return;
+        const blob = new Blob([blogToMd(b)], { type: "text/markdown" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Day_${b.day}_${b.slug || b.title.toLowerCase().replace(/\s+/g, "_")}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Downloaded!");
+      }
+      async function downloadAll() {
+        if (!allBlogs.length) return;
+        for (let i = 0; i < allBlogs.length; i++) {
+          await new Promise((r) => setTimeout(r, 120));
+          downloadBlog(i);
+        }
+        showToast(`All ${allBlogs.length} files downloaded!`);
+      }
+
+      // ── Loading ───────────────────────────────────────────────────────
+      let loadingTimer = null;
+      const loadMsgs = [
+        "🔍 Scraping website…",
+        "🧠 Detecting domain & strategy…",
+        "📋 Planning content calendar…",
+        "✍️  Writing blog posts…",
+        "🖼️  Generating image prompts…",
+        "🎯  Scoring SEO…",
+      ];
+
+      function startLoading(days) {
+        document.getElementById("blogs-container").innerHTML =
+          `<div class="loading-state"><div class="spinner-ring"></div><div class="loading-text">Crafting your ${days}-day series…</div><div class="loading-steps" id="loading-steps"></div></div>`;
+        document.getElementById("results").style.display = "block";
+        document.getElementById("domain-badge").style.display = "none";
+        let step = 0;
+        const el = document.getElementById("loading-steps");
+        function addStep() {
+          if (step >= loadMsgs.length) return;
+          const d = document.createElement("div");
+          d.className = "loading-step active";
+          d.innerHTML = loadMsgs[step];
+          el.appendChild(d);
+          step++;
+          loadingTimer = setTimeout(addStep, 16000);
+        }
+        loadingTimer = setTimeout(addStep, 2000);
+      }
+
+      async function generateBlogs() {
+        const url = document.getElementById("url").value.trim();
+        const tone = document.getElementById("tone").value;
+        const days = parseInt(document.getElementById("days").value, 10);
+        if (!url) {
+          showToast("Enter a URL first");
+          return;
+        }
+
+        const btn = document.getElementById("gen-btn");
+        btn.disabled = true;
+        btn.innerHTML =
+          '<i class="fa-solid fa-circle-notch fa-spin"></i> Generating…';
+        startLoading(days);
+
+        const body = { url, tone, days };
+        if (apiConfig.isCustom || apiConfig.provider === "other") {
+          body.api_key = apiConfig.apiKey;
+          body.provider = apiConfig.provider;
+          body.model = apiConfig.model;
+          if (apiConfig.baseUrl) {
+            body.base_url = apiConfig.baseUrl;
+          }
+        }
+
+        try {
+          const resp = await fetch("/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const data = await resp.json();
+          clearTimeout(loadingTimer);
+          if (!data.success) throw new Error(data.error || "Unknown error");
+          renderBlogs(data.blogs, data.domain, data.strategy_ref);
+          document.getElementById("results-title").textContent =
+            `Your ${days}-Day Series · ${tone}`;
+        } catch (err) {
+          clearTimeout(loadingTimer);
+          document.getElementById("blogs-container").innerHTML =
+            `<div class="error-box"><strong>Generation failed</strong><br>${err.message}</div>`;
+          document.getElementById("results").style.display = "block";
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML =
+            '<i class="fa-solid fa-wand-magic-sparkles"></i> Generate';
+        }
+      }
+
+      document.getElementById("url").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") generateBlogs();
+      });
+    </script>
+  </body>
+</html>
