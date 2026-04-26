@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>BlogForge • Content Engine</title>
+    <title>BlogForge · AI Content Engine</title>
+    <meta
+      name="description"
+      content="Paste any website URL — get SEO-ready, domain-optimized, long-form blog content styled after the world's best publications."
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap"
@@ -13,6 +17,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
       :root {
         --ink: #0c0c0c;
@@ -24,6 +29,7 @@
         --accent: #e8c547;
         --accent2: #c9a82c;
         --red: #e84545;
+        --green: #4ade80;
         --text: #d6d2ca;
         --text2: #9a9488;
         --r: 12px;
@@ -46,7 +52,6 @@
         min-height: 100vh;
         overflow-x: hidden;
       }
-      /* Ambient Background Glow */
       body::after {
         content: "";
         position: fixed;
@@ -73,7 +78,7 @@
         background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
       }
 
-      /* Masthead */
+      /* ── Masthead ─── */
       .masthead {
         position: sticky;
         top: 0;
@@ -138,8 +143,8 @@
         animation: pg 2s ease-in-out infinite;
       }
       .status-dot.live {
-        background: #4ade80;
-        box-shadow: 0 0 8px #4ade80;
+        background: var(--green);
+        box-shadow: 0 0 8px var(--green);
       }
       .status-dot.custom {
         background: var(--accent);
@@ -163,17 +168,16 @@
         transition: color 0.3s;
       }
       .model-badge.live {
-        color: #4ade80;
+        color: var(--green);
       }
       .model-badge.custom {
         color: var(--accent);
       }
-
       .btn-api {
         display: flex;
         align-items: center;
         gap: 5px;
-        background: transparent;
+        background: 0 0;
         border: 1px solid var(--rule);
         border-radius: 8px;
         padding: 5px 12px;
@@ -181,7 +185,7 @@
         font-size: 0.72rem;
         color: var(--text2);
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.3s;
         margin-left: 8px;
       }
       .btn-api:hover {
@@ -195,7 +199,7 @@
         background: rgba(232, 197, 71, 0.08);
       }
 
-      /* Shell */
+      /* ── Shell ─── */
       .shell {
         position: relative;
         z-index: 1;
@@ -203,8 +207,6 @@
         margin: 0 auto;
         padding: 60px 28px 100px;
       }
-
-      /* Hero */
       .hero-headline {
         font-family: "DM Serif Display", serif;
         font-size: clamp(2.5rem, 6vw, 4.2rem);
@@ -228,7 +230,61 @@
         margin-bottom: 48px;
       }
 
-      /* Form */
+      /* ── Setup Banner ─── */
+      .setup-banner {
+        background: rgba(232, 197, 71, 0.06);
+        border: 1px solid rgba(232, 197, 71, 0.2);
+        border-radius: 14px;
+        padding: 20px 24px;
+        margin-bottom: 32px;
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+      }
+      .setup-banner.hidden {
+        display: none;
+      }
+      .setup-banner i {
+        color: var(--accent);
+        font-size: 1.1rem;
+        margin-top: 2px;
+        flex-shrink: 0;
+      }
+      .setup-banner-content {
+        flex: 1;
+      }
+      .setup-banner-title {
+        font-weight: 600;
+        color: #fff;
+        font-size: 0.95rem;
+        margin-bottom: 6px;
+      }
+      .setup-banner-text {
+        font-size: 0.82rem;
+        color: var(--text2);
+        line-height: 1.6;
+      }
+      .setup-banner-text code {
+        background: rgba(255, 255, 255, 0.06);
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 0.78rem;
+        color: var(--accent);
+      }
+      .setup-banner .dismiss {
+        background: 0 0;
+        border: 0;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        flex-shrink: 0;
+      }
+      .setup-banner .dismiss:hover {
+        color: var(--text);
+      }
+
+      /* ── Form ─── */
       .form-card {
         background: rgba(21, 21, 21, 0.6);
         backdrop-filter: blur(8px);
@@ -238,8 +294,8 @@
         margin-bottom: 48px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         transition:
-          transform 0.3s ease,
-          border-color 0.3s ease;
+          transform 0.3s,
+          border-color 0.3s;
       }
       .form-card:hover {
         border-color: rgba(232, 197, 71, 0.2);
@@ -281,7 +337,7 @@
         font-size: 0.95rem;
         font-weight: 400;
         color: var(--text);
-        outline: none;
+        outline: 0;
         -webkit-appearance: none;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
@@ -307,7 +363,7 @@
         font-family: "DM Sans", sans-serif;
         font-weight: 600;
         font-size: 0.95rem;
-        border: none;
+        border: 0;
         border-radius: var(--r);
         padding: 12px 26px;
         cursor: pointer;
@@ -338,7 +394,48 @@
         letter-spacing: 0.04em;
       }
 
-      /* Section header */
+      /* ── How it works ─── */
+      .how-it-works {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 48px;
+      }
+      @media (max-width: 600px) {
+        .how-it-works {
+          grid-template-columns: 1fr;
+        }
+      }
+      .how-step {
+        background: rgba(21, 21, 21, 0.4);
+        border: 1px solid var(--rule);
+        border-radius: 14px;
+        padding: 20px;
+        text-align: center;
+        transition: border-color 0.3s;
+      }
+      .how-step:hover {
+        border-color: rgba(232, 197, 71, 0.3);
+      }
+      .how-step-num {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 1.8rem;
+        color: var(--accent);
+        margin-bottom: 6px;
+      }
+      .how-step-title {
+        font-weight: 600;
+        color: #fff;
+        font-size: 0.88rem;
+        margin-bottom: 6px;
+      }
+      .how-step-desc {
+        font-size: 0.78rem;
+        color: var(--text2);
+        line-height: 1.5;
+      }
+
+      /* ── Section Header ─── */
       .section-header {
         display: flex;
         align-items: center;
@@ -368,7 +465,7 @@
         display: flex;
         align-items: center;
         gap: 7px;
-        background: transparent;
+        background: 0 0;
         border: 1px solid var(--rule);
         border-radius: var(--r);
         padding: 8px 16px;
@@ -376,7 +473,7 @@
         font-size: 0.8rem;
         color: var(--text2);
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.3s;
       }
       .btn-dl-all:hover {
         border-color: var(--accent);
@@ -384,7 +481,7 @@
         background: rgba(232, 197, 71, 0.05);
       }
 
-      /* Loading */
+      /* ── Loading ─── */
       .loading-state {
         display: flex;
         flex-direction: column;
@@ -412,6 +509,13 @@
         color: #fff;
         letter-spacing: 0.02em;
       }
+      .loading-subtext {
+        font-size: 0.82rem;
+        color: var(--muted);
+        text-align: center;
+        max-width: 400px;
+        line-height: 1.6;
+      }
       .loading-steps {
         display: flex;
         flex-direction: column;
@@ -430,6 +534,9 @@
         color: var(--accent);
         font-weight: 500;
       }
+      .loading-step.done {
+        color: var(--green);
+      }
       @keyframes slideUpFade {
         to {
           opacity: 1;
@@ -437,7 +544,7 @@
         }
       }
 
-      /* Cards */
+      /* ── Blog Cards ─── */
       .blog-card {
         background: var(--ink2);
         border: 1px solid var(--rule);
@@ -506,7 +613,7 @@
         color: var(--muted);
       }
       .card-meta-item.seo {
-        color: #4ade80;
+        color: var(--green);
         font-weight: 500;
       }
       .tag-chip {
@@ -537,7 +644,7 @@
         font-size: 0.75rem;
         color: var(--text2);
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.2s;
         white-space: nowrap;
       }
       .btn-sm:hover {
@@ -556,8 +663,8 @@
         color: var(--ink);
       }
       .btn-sm.success {
-        border-color: #4ade80;
-        color: #4ade80;
+        border-color: var(--green);
+        color: var(--green);
         background: rgba(74, 222, 128, 0.1);
       }
       .chevron {
@@ -588,7 +695,7 @@
         margin-bottom: 12px;
       }
 
-      /* Error */
+      /* ── Error ─── */
       .error-box {
         background: rgba(232, 69, 69, 0.07);
         border: 1px solid rgba(232, 69, 69, 0.3);
@@ -599,8 +706,14 @@
         line-height: 1.6;
         box-shadow: 0 4px 12px rgba(232, 69, 69, 0.1);
       }
+      .error-box code {
+        background: rgba(255, 255, 255, 0.06);
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 0.82rem;
+      }
 
-      /* Toast */
+      /* ── Toast ─── */
       #toast {
         position: fixed;
         bottom: 32px;
@@ -623,7 +736,7 @@
         transform: translateX(-50%) translateY(0);
       }
 
-      /* API WIZARD MODAL */
+      /* ── API Modal ─── */
       .modal-backdrop {
         position: fixed;
         inset: 0;
@@ -637,7 +750,7 @@
         padding: 20px;
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.3s ease;
+        transition: opacity 0.3s;
       }
       .modal-backdrop.open {
         opacity: 1;
@@ -670,8 +783,8 @@
         color: #fff;
       }
       .modal-close {
-        background: transparent;
-        border: none;
+        background: 0 0;
+        border: 0;
         color: var(--muted);
         font-size: 1.1rem;
         cursor: pointer;
@@ -702,7 +815,7 @@
         font-family: "DM Sans", sans-serif;
         font-size: 0.95rem;
         color: var(--text);
-        outline: none;
+        outline: 0;
         transition: border-color 0.3s;
       }
       .modal-field select:focus,
@@ -732,7 +845,7 @@
       .key-status.set {
         background: rgba(74, 222, 128, 0.08);
         border: 1px solid rgba(74, 222, 128, 0.2);
-        color: #4ade80;
+        color: var(--green);
       }
       .modal-actions {
         padding: 24px 28px;
@@ -753,10 +866,10 @@
         justify-content: center;
         gap: 8px;
         transition: all 0.2s;
-        border: none;
+        border: 0;
       }
       .modal-btn.reset {
-        background: transparent;
+        background: 0 0;
         border: 1px solid var(--rule);
         color: var(--text2);
       }
@@ -773,7 +886,7 @@
         transform: translateY(-1px);
       }
 
-      /* READER MODAL */
+      /* ── Reader Modal ─── */
       .reader-backdrop {
         position: fixed;
         inset: 0;
@@ -788,7 +901,7 @@
         overflow-y: auto;
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.4s ease;
+        transition: opacity 0.4s;
       }
       .reader-backdrop.open {
         opacity: 1;
@@ -880,7 +993,7 @@
         width: 32px;
         height: 32px;
         background: #f0ebe1;
-        border: none;
+        border: 0;
         border-radius: 50%;
         cursor: pointer;
         font-size: 0.85rem;
@@ -896,7 +1009,7 @@
         top: 57px;
         z-index: 9;
         height: 3px;
-        background: transparent;
+        background: 0 0;
       }
       #reader-progress-bar {
         height: 100%;
@@ -1037,7 +1150,7 @@
         border-radius: 12px;
         display: block;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        transition: transform 0.3s ease;
+        transition: transform 0.3s;
       }
       .reader-img-item:hover img {
         transform: scale(1.02);
@@ -1074,7 +1187,7 @@
         font-size: 0.9rem;
       }
       .reader-prompt-row:last-child {
-        border-bottom: none;
+        border-bottom: 0;
       }
       .reader-prompt-pos {
         min-width: 140px;
@@ -1091,6 +1204,7 @@
         color: #5a5040;
         line-height: 1.6;
       }
+
       @media (max-width: 600px) {
         .shell {
           padding: 40px 20px 80px;
@@ -1157,11 +1271,61 @@
         styled after the world's best publications.
       </p>
 
+      <!-- Setup Guide -->
+      <div class="setup-banner" id="setup-banner">
+        <i class="fa-solid fa-circle-info"></i>
+        <div class="setup-banner-content">
+          <div class="setup-banner-title">Quick Setup</div>
+          <div class="setup-banner-text">
+            Click <strong>API</strong> in the top-right to connect your LLM
+            provider. Works with <code>Groq</code> (free), <code>OpenAI</code>,
+            <code>Anthropic</code>, or <code>DeepSeek</code>. Your API key stays
+            in your browser and is sent directly to the provider — never stored
+            on our server.
+          </div>
+        </div>
+        <button class="dismiss" onclick="dismissSetup()">Dismiss</button>
+      </div>
+
+      <!-- How it Works -->
+      <div class="how-it-works">
+        <div class="how-step">
+          <div class="how-step-num">01</div>
+          <div class="how-step-title">Paste a URL</div>
+          <div class="how-step-desc">
+            We scrape the site and auto-detect the domain — tech, health,
+            finance, travel, etc.
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">02</div>
+          <div class="how-step-title">AI Plans & Writes</div>
+          <div class="how-step-desc">
+            A content strategist agent plans your series, then a writer agent
+            produces 1500+ word posts.
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">03</div>
+          <div class="how-step-title">Download & Publish</div>
+          <div class="how-step-desc">
+            Copy, download as Markdown, or read in our built-in reader. Ready
+            for your CMS.
+          </div>
+        </div>
+      </div>
+
+      <!-- Form -->
       <div class="form-card">
         <div class="form-row main">
           <div class="field url-field">
             <label>Website URL</label>
-            <input id="url" type="url" placeholder="https://example.com" />
+            <input
+              id="url"
+              type="url"
+              placeholder="https://example.com"
+              autocomplete="url"
+            />
           </div>
           <div class="field">
             <label>Tone</label>
@@ -1193,7 +1357,7 @@
           </div>
         </div>
         <p class="form-hint">
-          ⏱ Domain auto-detected · Strategy applied from top-tier blogs · Rate
+          Domain auto-detected · Strategy applied from top-tier blogs · Rate
           limits handled
         </p>
       </div>
@@ -1210,8 +1374,8 @@
               style="display: none"
             ></span>
           </div>
-          <button class="btn-dl-all" onclick="downloadAll()">
-            <i class="fa-solid fa-file-zipper"></i> Download All
+          <button class="btn-dl-all" onclick="downloadAllZip()">
+            <i class="fa-solid fa-file-zipper"></i> Download All (.zip)
           </button>
         </div>
         <div id="blogs-container"></div>
@@ -1220,6 +1384,7 @@
 
     <div id="toast"></div>
 
+    <!-- API Modal -->
     <div class="modal-backdrop" id="api-modal" onclick="closeApiModal(event)">
       <div class="modal-panel" onclick="event.stopPropagation()">
         <div class="modal-header">
@@ -1228,7 +1393,6 @@
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
-
         <div class="modal-field">
           <label>Provider</label>
           <select id="api-provider" onchange="onProviderChange()">
@@ -1236,53 +1400,41 @@
             <option value="openai">OpenAI</option>
             <option value="anthropic">Anthropic</option>
             <option value="deepseek">DeepSeek</option>
-            <option value="other">Other</option>
           </select>
         </div>
-
-        <div class="modal-field" id="base-url-container" style="display: none">
-          <label>Base URL</label>
-          <input
-            type="url"
-            id="api-base-url"
-            placeholder="https://api.together.xyz/v1"
-          />
-          <div class="field-hint">
-            Required for custom providers (OpenAI compatible).
-          </div>
-        </div>
-
         <div class="modal-field">
           <label>Model</label>
           <select id="api-model" onchange="onModelChange()"></select>
           <input
             type="text"
             id="custom-model-input"
-            placeholder="e.g., openai/mistral-7b"
+            placeholder="e.g., llama-3.3-70b-versatile"
             style="display: none; margin-top: 10px"
           />
           <div class="field-hint" id="model-hint">
             Select a provider to see available models
           </div>
         </div>
-
         <div class="modal-field">
           <label>API Key</label>
-          <input type="password" id="api-key" placeholder="sk-... or gsk_..." />
+          <input
+            type="password"
+            id="api-key"
+            placeholder="sk-... or gsk_..."
+            autocomplete="off"
+          />
           <div class="field-hint">
-            Your key is stored locally in your browser — never sent to our
-            servers, only to the provider directly.
+            Your key stays in your browser. It's sent to your chosen provider
+            via our backend — never logged or stored.
           </div>
         </div>
-
         <div class="key-status default" id="key-status">
           <i class="fa-solid fa-circle-info"></i> Using server default (Groq
           free tier)
         </div>
-
         <div class="modal-actions">
           <button class="modal-btn reset" onclick="resetApiConfig()">
-            <i class="fa-solid fa-rotate-left"></i> Reset to Default
+            <i class="fa-solid fa-rotate-left"></i> Reset
           </button>
           <button class="modal-btn save" onclick="saveApiConfig()">
             <i class="fa-solid fa-check"></i> Save & Apply
@@ -1291,6 +1443,7 @@
       </div>
     </div>
 
+    <!-- Reader Modal -->
     <div
       class="reader-backdrop"
       id="reader-backdrop"
@@ -1324,16 +1477,19 @@
     </div>
 
     <script>
-      // ── State ──────────────────────────────────────────────────────────
+      // ══════════════════════════════════════════════════════════════════════════
+      // CONFIGURATION — CHANGE THIS TO YOUR RENDER URL
+      // ══════════════════════════════════════════════════════════════════════════
+      const API_BASE = "https://YOUR-APP-NAME.onrender.com"; // ← CHANGE THIS
+
+      // ── State ────────────────────────────────────────────────────────────────
       let allBlogs = [];
       let currentReaderIdx = -1;
 
-      // API config (persisted in localStorage)
       let apiConfig = {
         provider: "groq",
         model: "llama-3.3-70b-versatile",
         apiKey: null,
-        baseUrl: null,
         isCustom: false,
       };
 
@@ -1342,21 +1498,35 @@
         openai: "OpenAI",
         anthropic: "Anthropic",
         deepseek: "DeepSeek",
-        other: "Custom",
       };
 
-      // Load saved config
+      // Load saved config (only non-sensitive parts)
       try {
-        const saved = JSON.parse(
-          localStorage.getItem("blogforge_api") || "null",
-        );
+        const saved = JSON.parse(sessionStorage.getItem("bf_cfg") || "null");
         if (saved) {
           apiConfig = saved;
           updateMastheadBadge();
         }
       } catch (e) {}
 
-      // ── Helpers ────────────────────────────────────────────────────────
+      // Dismiss setup banner if seen before
+      if (localStorage.getItem("bf_setup_dismissed")) {
+        document.getElementById("setup-banner").classList.add("hidden");
+      }
+
+      function dismissSetup() {
+        document.getElementById("setup-banner").classList.add("hidden");
+        localStorage.setItem("bf_setup_dismissed", "1");
+      }
+
+      // ── Sanitization ─────────────────────────────────────────────────────────
+      function esc(s) {
+        const d = document.createElement("div");
+        d.appendChild(document.createTextNode(s || ""));
+        return d.innerHTML;
+      }
+
+      // ── Helpers ──────────────────────────────────────────────────────────────
       function showToast(msg) {
         const t = document.getElementById("toast");
         t.textContent = msg;
@@ -1365,14 +1535,13 @@
       }
 
       function inlineMd(raw) {
-        return raw
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
-          .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-          .replace(/\*(.+?)\*/g, "<em>$1</em>");
+        let s = esc(raw);
+        s = s.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
+        s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+        s = s.replace(/\*(.+?)\*/g, "<em>$1</em>");
+        return s;
       }
+
       function mdToHtml(raw) {
         if (!raw) return "";
         return raw
@@ -1423,10 +1592,12 @@
         const kw = ((p || "").toLowerCase().match(/[a-z]+/g) || []).filter(
           (w) => !stop.has(w) && w.length > 3,
         );
-        return kw.slice(0, 3).join(",") || "nature";
+        return encodeURIComponent(kw.slice(0, 3).join(",") || "nature");
       }
-      function imgUrl(p, w, h, sig) {
-        return `https://source.unsplash.com/${w}x${h}/?${promptToQuery(p)}&sig=${sig}`;
+
+      // Use picsum.photos (Unsplash source is dead)
+      function imgUrl(prompt, w, h, sig) {
+        return `https://picsum.photos/seed/${promptToQuery(prompt)}${sig}/${w}/${h}`;
       }
 
       function blogToMd(b) {
@@ -1436,90 +1607,54 @@
         return `---\ntitle: ${b.title}\nslug: ${b.slug || ""}\nfocus_keyword: ${b.focus_keyword || ""}\nmeta_description: ${b.meta_description || ""}\nread_time: ${b.read_time || ""}\nseo_score: ${b.seo_score || ""}\ntags: ${(b.tags || []).join(", ")}\nhero_image_prompt: ${b.hero_image_prompt || ""}\ninline_image_prompts:\n${imgs}\n---\n\n${b.content || ""}`;
       }
 
-      // ── API Modal ─────────────────────────────────────────────────────
-
+      // ── API Modal ────────────────────────────────────────────────────────────
       async function onProviderChange() {
         const prov = document.getElementById("api-provider").value;
         const modelSel = document.getElementById("api-model");
         const hint = document.getElementById("model-hint");
         const customInput = document.getElementById("custom-model-input");
-        const baseUrlContainer = document.getElementById("base-url-container");
-
-        // Handle "Other" Custom Provider immediately
-        if (prov === "other") {
-          baseUrlContainer.style.display = "block";
-          modelSel.innerHTML = `<option value="custom">-- Custom Model --</option>`;
-          modelSel.value = "custom";
-          hint.textContent =
-            "Enter your model name below. Tip: Prefix with openai/ if compatible.";
-          onModelChange();
-          return;
-        }
-
-        // Standard Providers
-        baseUrlContainer.style.display = "none";
-        hint.innerHTML =
-          '<i class="fa-solid fa-circle-notch fa-spin"></i> Fetching models from API...';
-        modelSel.innerHTML = '<option value="">Loading...</option>';
         customInput.style.display = "none";
 
-        try {
-          const res = await fetch(`/api/models/${prov}`);
-          const data = await res.json();
+        hint.innerHTML =
+          '<i class="fa-solid fa-circle-notch fa-spin"></i> Fetching models…';
+        modelSel.innerHTML = '<option value="">Loading…</option>';
 
-          if (!res.ok) throw new Error(data.error || "Unknown API error");
+        try {
+          const res = await fetch(`${API_BASE}/api/models/${prov}`);
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "API error");
 
           const models = data.models || [];
-
-          let optionsHtml = models
-            .map((m) => `<option value="${m}">${m}</option>`)
+          let html = models
+            .map((m) => `<option value="${esc(m)}">${esc(m)}</option>`)
             .join("");
-          optionsHtml += `<option value="custom">-- Other (Custom Model) --</option>`;
-          modelSel.innerHTML = optionsHtml;
+          html += '<option value="custom">— Custom Model —</option>';
+          modelSel.innerHTML = html;
 
-          if (prov === apiConfig.provider) {
-            if (models.includes(apiConfig.model)) {
-              modelSel.value = apiConfig.model;
-            } else {
-              modelSel.value = "custom";
-              customInput.value = apiConfig.model;
-            }
+          if (prov === apiConfig.provider && models.includes(apiConfig.model)) {
+            modelSel.value = apiConfig.model;
           }
-
-          hint.textContent = `${models.length} models fetched from API for ${PROVIDER_LABELS[prov]}`;
+          hint.textContent = `${models.length} models available for ${PROVIDER_LABELS[prov]}`;
         } catch (e) {
-          modelSel.innerHTML = `<option value="custom">-- Other (Custom Model) --</option>`;
-          hint.textContent = `Failed to fetch from API. Please enter model manually.`;
-          document.getElementById("custom-model-input").value =
-            apiConfig.model || "";
+          modelSel.innerHTML =
+            '<option value="custom">— Custom Model —</option>';
+          hint.textContent = "Could not fetch models. Enter manually.";
+          customInput.style.display = "block";
+          customInput.value = apiConfig.model || "";
         }
-
         onModelChange();
       }
 
       function onModelChange() {
-        const modelSel = document.getElementById("api-model").value;
-        const customInput = document.getElementById("custom-model-input");
-        if (modelSel === "custom") {
-          customInput.style.display = "block";
-        } else {
-          customInput.style.display = "none";
-        }
+        const v = document.getElementById("api-model").value;
+        document.getElementById("custom-model-input").style.display =
+          v === "custom" ? "block" : "none";
       }
 
       async function openApiModal() {
         document.getElementById("api-provider").value = apiConfig.provider;
         await onProviderChange();
-
         document.getElementById("api-key").value = apiConfig.apiKey || "";
-
-        if (apiConfig.provider === "other") {
-          document.getElementById("api-base-url").value =
-            apiConfig.baseUrl || "";
-          document.getElementById("custom-model-input").value =
-            apiConfig.model || "";
-        }
-
         updateKeyStatus();
         document.getElementById("api-modal").classList.add("open");
       }
@@ -1528,7 +1663,6 @@
         if (e.target === document.getElementById("api-modal"))
           closeApiModalDirect();
       }
-
       function closeApiModalDirect() {
         document.getElementById("api-modal").classList.remove("open");
       }
@@ -1536,30 +1670,24 @@
       function saveApiConfig() {
         const prov = document.getElementById("api-provider").value;
         let model = document.getElementById("api-model").value;
-
         if (model === "custom") {
           model = document.getElementById("custom-model-input").value.trim();
           if (!model) {
-            showToast("Please enter a custom model name");
+            showToast("Enter a model name");
             return;
           }
         }
-
         const key = document.getElementById("api-key").value.trim();
-        let baseUrl = null;
-        if (prov === "other") {
-          baseUrl = document.getElementById("api-base-url").value.trim();
-        }
 
         apiConfig = {
           provider: prov,
           model: model,
           apiKey: key || null,
-          baseUrl: baseUrl || null,
-          isCustom: !!key || prov === "other",
+          isCustom: !!key,
         };
 
-        localStorage.setItem("blogforge_api", JSON.stringify(apiConfig));
+        // Use sessionStorage — clears when tab closes. Safer than localStorage for keys.
+        sessionStorage.setItem("bf_cfg", JSON.stringify(apiConfig));
         updateMastheadBadge();
         updateKeyStatus();
         closeApiModalDirect();
@@ -1571,10 +1699,9 @@
           provider: "groq",
           model: "llama-3.3-70b-versatile",
           apiKey: null,
-          baseUrl: null,
           isCustom: false,
         };
-        localStorage.removeItem("blogforge_api");
+        sessionStorage.removeItem("bf_cfg");
         document.getElementById("api-provider").value = "groq";
         onProviderChange();
         document.getElementById("api-key").value = "";
@@ -1594,9 +1721,7 @@
           .split("-")
           .slice(0, 3)
           .join("-");
-
         badge.textContent = `${label} · ${shortModel}`;
-
         if (apiConfig.isCustom) {
           dot.className = "status-dot custom";
           badge.className = "model-badge custom";
@@ -1612,20 +1737,22 @@
         const el = document.getElementById("key-status");
         if (apiConfig.isCustom) {
           el.className = "key-status set";
-          el.innerHTML = `<i class="fa-solid fa-circle-check"></i> Custom key active — ${PROVIDER_LABELS[apiConfig.provider]} · ${apiConfig.model}`;
+          el.innerHTML = `<i class="fa-solid fa-circle-check"></i> Custom key active — ${esc(PROVIDER_LABELS[apiConfig.provider])} · ${esc(apiConfig.model)}`;
         } else {
           el.className = "key-status default";
-          el.innerHTML = `<i class="fa-solid fa-circle-info"></i> Using server default (Groq free tier)`;
+          el.innerHTML =
+            '<i class="fa-solid fa-circle-info"></i> Using server default (Groq free tier)';
         }
       }
 
       updateMastheadBadge();
 
-      // ── Reader ─────────────────────────────────────────────────────────
+      // ── Reader ───────────────────────────────────────────────────────────────
       function openReader(idx) {
         currentReaderIdx = idx;
         const b = allBlogs[idx];
         if (!b) return;
+
         const heroUrl = imgUrl(
           b.hero_image_prompt || "writing desk",
           1200,
@@ -1633,16 +1760,23 @@
           idx * 100,
         );
         const tags = (b.tags || [])
-          .map((t) => `<span class="reader-tag">#${t}</span>`)
+          .map((t) => `<span class="reader-tag">#${esc(t)}</span>`)
           .join(" ");
         const imgs = b.inline_images || [];
+
         const imgGrid = imgs.length
-          ? `<div class="reader-img-grid">${imgs.map((img, i) => `<div class="reader-img-item"><img src="${imgUrl(img.prompt, 600, 400, idx * 100 + i + 1)}" alt="${img.alt_text || img.prompt}" loading="lazy"><div class="reader-img-caption">${img.prompt}</div></div>`).join("")}</div>`
+          ? `<div class="reader-img-grid">${imgs
+              .map(
+                (img, i) =>
+                  `<div class="reader-img-item"><img src="${imgUrl(img.prompt, 600, 400, idx * 100 + i + 1)}" alt="${esc(img.alt_text || img.prompt)}" loading="lazy"><div class="reader-img-caption">${esc(img.prompt)}</div></div>`,
+              )
+              .join("")}</div>`
           : "";
+
         const prompts = imgs
           .map(
             (img) =>
-              `<div class="reader-prompt-row"><span class="reader-prompt-pos">${img.position}</span><span class="reader-prompt-text">${img.prompt}</span></div>`,
+              `<div class="reader-prompt-row"><span class="reader-prompt-pos">${esc(img.position)}</span><span class="reader-prompt-text">${esc(img.prompt)}</span></div>`,
           )
           .join("");
 
@@ -1650,9 +1784,9 @@
           `DAY ${b.day}`;
         document.getElementById("reader-topbar-title").textContent = b.title;
         document.getElementById("reader-content").innerHTML = `
-    <div class="reader-hero"><img src="${heroUrl}" alt="${b.hero_image_prompt || ""}"><div class="reader-hero-overlay"></div><div class="reader-hero-text"><h1>${b.title}</h1><div class="reader-hero-pills"><span class="reader-pill">⏱ ${b.read_time || ""}</span><span class="reader-pill">🔑 ${b.focus_keyword || ""}</span><span class="reader-pill gold">SEO ${b.seo_score || "–"}/100</span></div></div></div>
-    <div class="reader-tags">${tags}</div>
-    <div class="reader-body"><div class="reader-meta-desc">${b.meta_description || ""}</div><div class="reader-article">${mdToHtml(b.content || "")}</div>${imgGrid}${prompts ? `<div class="reader-prompts"><div class="reader-prompts-title">📸 Image Prompts</div>${prompts}</div>` : ""}</div>`;
+        <div class="reader-hero"><img src="${heroUrl}" alt="${esc(b.hero_image_prompt || "")}"><div class="reader-hero-overlay"></div><div class="reader-hero-text"><h1>${esc(b.title)}</h1><div class="reader-hero-pills"><span class="reader-pill">\u23f1 ${esc(b.read_time || "")}</span><span class="reader-pill">\ud83d\udd11 ${esc(b.focus_keyword || "")}</span><span class="reader-pill gold">SEO ${esc(String(b.seo_score || "\u2013"))}/100</span></div></div></div>
+        <div class="reader-tags">${tags}</div>
+        <div class="reader-body"><div class="reader-meta-desc">${esc(b.meta_description || "")}</div><div class="reader-article">${mdToHtml(b.content || "")}</div>${imgGrid}${prompts ? `<div class="reader-prompts"><div class="reader-prompts-title">\ud83d\udcf8 Image Prompts</div>${prompts}</div>` : ""}</div>`;
 
         const bd = document.getElementById("reader-backdrop");
         bd.classList.add("open");
@@ -1661,17 +1795,16 @@
 
         const panel = document.getElementById("reader-panel");
         bd.onscroll = () => {
-          const panelRect = panel.getBoundingClientRect();
-          const viewHeight = window.innerHeight;
-          const scrollable = panelRect.height - viewHeight;
+          const r = panel.getBoundingClientRect();
+          const scrollable = r.height - window.innerHeight;
           if (scrollable > 0) {
-            const scrolled = Math.max(0, -panelRect.top + 40);
-            let progress = (scrolled / scrollable) * 100;
+            const scrolled = Math.max(0, -r.top + 40);
             document.getElementById("reader-progress-bar").style.width =
-              Math.min(100, Math.max(0, progress)) + "%";
+              Math.min(100, Math.max(0, (scrolled / scrollable) * 100)) + "%";
           }
         };
       }
+
       function closeReader(e) {
         if (e.target === document.getElementById("reader-backdrop"))
           closeReaderDirect();
@@ -1680,23 +1813,25 @@
         document.getElementById("reader-backdrop").classList.remove("open");
         document.body.style.overflow = "";
       }
+
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
           closeReaderDirect();
           closeApiModalDirect();
         }
       });
+
       function readerCopy() {
         if (currentReaderIdx >= 0)
           navigator.clipboard
             .writeText(blogToMd(allBlogs[currentReaderIdx]))
-            .then(() => showToast("Copied!"));
+            .then(() => showToast("Copied to clipboard"));
       }
       function readerDownload() {
         if (currentReaderIdx >= 0) downloadBlog(currentReaderIdx);
       }
 
-      // ── Render cards ──────────────────────────────────────────────────
+      // ── Render Cards ─────────────────────────────────────────────────────────
       function renderBlogs(blogs, domain, strategyRef) {
         allBlogs = blogs;
         const c = document.getElementById("blogs-container");
@@ -1704,13 +1839,13 @@
 
         if (domain) {
           const db = document.getElementById("domain-badge");
-          db.textContent = `${domain} · styled after ${strategyRef}`;
+          db.textContent = `${esc(domain)} · styled after ${esc(strategyRef)}`;
           db.style.display = "inline-block";
         }
 
         blogs.forEach((b, idx) => {
           const tags = (b.tags || [])
-            .map((t) => `<span class="tag-chip">#${t}</span>`)
+            .map((t) => `<span class="tag-chip">#${esc(t)}</span>`)
             .join(" ");
           const excerpt = (b.content || "")
             .replace(/#{1,3}\s/g, "")
@@ -1722,25 +1857,25 @@
           card.className = "blog-card";
           card.style.animationDelay = `${idx * 0.15}s`;
           card.innerHTML = `
-      <div class="card-header" onclick="togglePreview(${idx})">
-        <div class="card-header-left">
-          <span class="day-pill">DAY ${b.day}</span>
-          <div>
-            <div class="card-title">${b.title}</div>
-            <div class="card-meta">
-              <span class="card-meta-item">⏱ ${b.read_time || ""}</span><span class="card-meta-item">·</span>
-              <span class="card-meta-item seo">SEO ${b.seo_score || "–"}/100</span><span class="card-meta-item">·</span>${tags}
+          <div class="card-header" onclick="togglePreview(${idx})">
+            <div class="card-header-left">
+              <span class="day-pill">DAY ${b.day}</span>
+              <div>
+                <div class="card-title">${esc(b.title)}</div>
+                <div class="card-meta">
+                  <span class="card-meta-item">\u23f1 ${esc(b.read_time || "")}</span><span class="card-meta-item">\u00b7</span>
+                  <span class="card-meta-item seo">SEO ${esc(String(b.seo_score || "\u2013"))}/100</span><span class="card-meta-item">\u00b7</span>${tags}
+                </div>
+              </div>
+            </div>
+            <div class="card-btns">
+              <button class="btn-sm" onclick="event.stopPropagation();copyBlog(${idx})" id="copy-btn-${idx}"><i class="fa-regular fa-copy"></i> Copy</button>
+              <button class="btn-sm" onclick="event.stopPropagation();downloadBlog(${idx})"><i class="fa-solid fa-download"></i> .md</button>
+              <button class="btn-sm primary" onclick="event.stopPropagation();openReader(${idx})"><i class="fa-regular fa-eye"></i> Read</button>
+              <i class="fa-solid fa-chevron-down chevron" id="chev-${idx}"></i>
             </div>
           </div>
-        </div>
-        <div class="card-btns">
-          <button class="btn-sm" onclick="event.stopPropagation();copyBlog(${idx})" id="copy-btn-${idx}"><i class="fa-regular fa-copy"></i> Copy</button>
-          <button class="btn-sm" onclick="event.stopPropagation();downloadBlog(${idx})"><i class="fa-solid fa-download"></i> .md</button>
-          <button class="btn-sm primary" onclick="event.stopPropagation();openReader(${idx})"><i class="fa-regular fa-eye"></i> Read</button>
-          <i class="fa-solid fa-chevron-down chevron" id="chev-${idx}"></i>
-        </div>
-      </div>
-      <div class="card-preview hidden" id="preview-${idx}"><div class="preview-excerpt"><p>${excerpt}${excerpt.length >= 220 ? "…" : ""}</p><button class="btn-sm primary" style="margin-top:10px" onclick="openReader(${idx})"><i class="fa-regular fa-eye"></i> Read Full Blog</button></div></div>`;
+          <div class="card-preview hidden" id="preview-${idx}"><div class="preview-excerpt"><p>${esc(excerpt)}${excerpt.length >= 220 ? "\u2026" : ""}</p><button class="btn-sm primary" style="margin-top:10px" onclick="openReader(${idx})"><i class="fa-regular fa-eye"></i> Read Full Blog</button></div></div>`;
           c.appendChild(card);
         });
 
@@ -1755,7 +1890,7 @@
         document.getElementById(`chev-${idx}`).classList.toggle("open");
       }
 
-      // ── Actions ───────────────────────────────────────────────────────
+      // ── Actions ──────────────────────────────────────────────────────────────
       function copyBlog(idx) {
         const b = allBlogs[idx];
         if (!b) return;
@@ -1771,6 +1906,7 @@
           }, 2000);
         });
       }
+
       function downloadBlog(idx) {
         const b = allBlogs[idx];
         if (!b) return;
@@ -1778,91 +1914,131 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `Day_${b.day}_${b.slug || b.title.toLowerCase().replace(/\s+/g, "_")}.md`;
+        a.download = `Day_${b.day}_${(b.slug || b.title.toLowerCase().replace(/\s+/g, "_")).slice(0, 60)}.md`;
         a.click();
         URL.revokeObjectURL(url);
         showToast("Downloaded!");
       }
-      async function downloadAll() {
+
+      async function downloadAllZip() {
         if (!allBlogs.length) return;
-        for (let i = 0; i < allBlogs.length; i++) {
-          await new Promise((r) => setTimeout(r, 120));
-          downloadBlog(i);
-        }
-        showToast(`All ${allBlogs.length} files downloaded!`);
+        const zip = new JSZip();
+        allBlogs.forEach((b) => {
+          const fname = `Day_${b.day}_${(b.slug || "post").slice(0, 50)}.md`;
+          zip.file(fname, blogToMd(b));
+        });
+        const blob = await zip.generateAsync({ type: "blob" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `blogforge_${allBlogs.length}_posts.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast(`Downloaded ${allBlogs.length} posts as .zip`);
       }
 
-      // ── Loading ───────────────────────────────────────────────────────
+      // ── Loading ──────────────────────────────────────────────────────────────
       let loadingTimer = null;
       const loadMsgs = [
-        "🔍 Scraping website…",
-        "🧠 Detecting domain & strategy…",
-        "📋 Planning content calendar…",
-        "✍️  Writing blog posts…",
-        "🖼️  Generating image prompts…",
-        "🎯  Scoring SEO…",
+        "\ud83d\udd0d Scraping website\u2026",
+        "\ud83e\udde0 Detecting domain & strategy\u2026",
+        "\ud83d\udccb Planning content calendar\u2026",
+        "\u270d\ufe0f  Writing blog posts\u2026",
+        "\ud83d\uddbc\ufe0f  Generating image prompts\u2026",
+        "\ud83c\udfaf  Scoring SEO\u2026",
       ];
 
       function startLoading(days) {
-        document.getElementById("blogs-container").innerHTML =
-          `<div class="loading-state"><div class="spinner-ring"></div><div class="loading-text">Crafting your ${days}-day series…</div><div class="loading-steps" id="loading-steps"></div></div>`;
+        document.getElementById("blogs-container").innerHTML = `
+        <div class="loading-state">
+          <div class="spinner-ring"></div>
+          <div class="loading-text">Crafting your ${days}-day series\u2026</div>
+          <div class="loading-subtext">This takes 2\u20138 minutes depending on the number of posts and your LLM provider. The page will update automatically.</div>
+          <div class="loading-steps" id="loading-steps"></div>
+        </div>`;
         document.getElementById("results").style.display = "block";
         document.getElementById("domain-badge").style.display = "none";
+
         let step = 0;
         const el = document.getElementById("loading-steps");
         function addStep() {
           if (step >= loadMsgs.length) return;
+          // Mark previous as done
+          const prev = el.querySelector(".active");
+          if (prev) {
+            prev.classList.remove("active");
+            prev.classList.add("done");
+          }
           const d = document.createElement("div");
           d.className = "loading-step active";
           d.innerHTML = loadMsgs[step];
           el.appendChild(d);
           step++;
-          loadingTimer = setTimeout(addStep, 16000);
+          loadingTimer = setTimeout(addStep, 18000);
         }
-        loadingTimer = setTimeout(addStep, 2000);
+        loadingTimer = setTimeout(addStep, 1500);
       }
 
+      // ── Generate ─────────────────────────────────────────────────────────────
       async function generateBlogs() {
         const url = document.getElementById("url").value.trim();
         const tone = document.getElementById("tone").value;
         const days = parseInt(document.getElementById("days").value, 10);
+
         if (!url) {
           showToast("Enter a URL first");
+          return;
+        }
+        try {
+          new URL(url);
+        } catch {
+          showToast("Enter a valid URL (https://\u2026)");
           return;
         }
 
         const btn = document.getElementById("gen-btn");
         btn.disabled = true;
         btn.innerHTML =
-          '<i class="fa-solid fa-circle-notch fa-spin"></i> Generating…';
+          '<i class="fa-solid fa-circle-notch fa-spin"></i> Generating\u2026';
         startLoading(days);
 
         const body = { url, tone, days };
-        if (apiConfig.isCustom || apiConfig.provider === "other") {
+        if (apiConfig.isCustom) {
           body.api_key = apiConfig.apiKey;
           body.provider = apiConfig.provider;
           body.model = apiConfig.model;
-          if (apiConfig.baseUrl) {
-            body.base_url = apiConfig.baseUrl;
-          }
         }
 
         try {
-          const resp = await fetch("/generate", {
+          const resp = await fetch(`${API_BASE}/generate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body),
           });
           const data = await resp.json();
           clearTimeout(loadingTimer);
-          if (!data.success) throw new Error(data.error || "Unknown error");
+
+          if (!data.success) {
+            let errMsg = data.error || "Unknown error";
+            if (resp.status === 429)
+              errMsg =
+                "Rate limited — please wait a few minutes and try again.";
+            throw new Error(errMsg);
+          }
           renderBlogs(data.blogs, data.domain, data.strategy_ref);
           document.getElementById("results-title").textContent =
-            `Your ${days}-Day Series · ${tone}`;
+            `Your ${days}-Day Series \u00b7 ${tone}`;
         } catch (err) {
           clearTimeout(loadingTimer);
+          let hint = "";
+          if (err.message.includes("API key"))
+            hint =
+              "<br><br>Tip: Click the <strong>API</strong> button in the top-right to set your key.";
+          if (err.message.includes("fetch"))
+            hint =
+              "<br><br>Tip: Make sure the backend is running and <code>API_BASE</code> in this page points to it.";
           document.getElementById("blogs-container").innerHTML =
-            `<div class="error-box"><strong>Generation failed</strong><br>${err.message}</div>`;
+            `<div class="error-box"><strong>Generation failed</strong><br>${esc(err.message)}${hint}</div>`;
           document.getElementById("results").style.display = "block";
         } finally {
           btn.disabled = false;

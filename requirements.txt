@@ -1,7 +1,6 @@
-fastapi
-uvicorn[standard]
-crewai
-crewai-tools
-pydantic
-python-dotenv
-jinja2
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+crewai==0.80.0
+crewai-tools==0.13.2
+python-dotenv==1.0.1
+pydantic==2.9.0
