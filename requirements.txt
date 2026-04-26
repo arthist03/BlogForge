@@ -1,6 +1,6 @@
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
-crewai==0.80.0
-crewai-tools==0.13.2
-python-dotenv==1.0.1
-pydantic==2.9.0
+fastapi>=0.115.0,<1.0
+uvicorn[standard]>=0.30.0,<1.0
+crewai>=0.80.0,<2.0
+crewai-tools>=0.13.0,<1.0
+python-dotenv>=1.0.0,<2.0
+pydantic>=2.9.0,<3.0
