@@ -16,7 +16,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure Pages
-        uses: actions/configure-pages@v3
+        # use v4 to pick up fixes and avoid deprecated dependencies
+        uses: actions/configure-pages@v4
 
       - name: Upload artifact for deployment
         # Use v2 to avoid depending on deprecated actions/upload-artifact v3
