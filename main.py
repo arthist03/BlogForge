@@ -24,10 +24,11 @@ load_dotenv()
 
 app = FastAPI(title="BlogForge Pro", docs_url=None, redoc_url=None)
 
-# CORS — allow your GitHub Pages domain
+# CORS — allowed origins (update via env `ALLOWED_ORIGINS`)
+# Default includes local dev origins and the Render frontend domain
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
-    "https://YOUR_USERNAME.github.io"  # ← CHANGE THIS
+    "http://localhost:8000,http://127.0.0.1:8000,https://blogforge-3dvj.onrender.com"
 ).split(",")
 
 app.add_middleware(
