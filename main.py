@@ -78,6 +78,12 @@ class BlogRequest(BaseModel):
     api_key: str | None = None
     provider: str = "groq"
     model: str = "llama-3.3-70b-versatile"
+    base_url: str | None = None
+    style_profile: dict | None = None
+    preset: str | None = None
+    preset_text: str | None = None
+    ensemble: bool = True
+    rescore: bool = True
 
     @field_validator("url")
     @classmethod
@@ -112,8 +118,19 @@ class BlogRequest(BaseModel):
     @field_validator("provider")
     @classmethod
     def validate_provider(cls, v: str) -> str:
-        if v not in PROVIDER_MODELS:
+        if v not in PROVIDER_MODELS and v != "custom":
             raise ValueError(f"Unknown provider: {v}")
+        return v
+
+    @field_validator("base_url")
+    @classmethod
+    def validate_base_url(cls, v: str | None) -> str | None:
+        if v is None or v.strip() == "":
+            return None
+        v = v.strip()
+        parsed = urlparse(v)
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
+            raise ValueError("Custom base URL must be a valid http(s) URL")
         return v
 
     @field_validator("tone")
@@ -129,6 +146,24 @@ class BlogRequest(BaseModel):
         if v and len(v) > 256:
             raise ValueError("API key too long")
         return v
+
+    @field_validator("preset")
+    @classmethod
+    def validate_preset(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        if v not in PRESET_PROMPTS and v != "custom":
+            raise ValueError(f"Unknown preset: {v}")
+        return v
+
+
+class StyleExtractRequest(BaseModel):
+    text: str | None = None
+    urls: list[str] | None = None
+    provider: str = "groq"
+    model: str = "llama-3.3-70b-versatile"
+    api_key: str | None = None
+    base_url: str | None = None
 
 
 class BlogPlan(BaseModel):
@@ -173,7 +208,7 @@ class BlogPost(BaseModel):
     inline_images: list[InlineImage] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
     read_time: str = ""
-    seo_score: int = 75
+    seo_score: int = 95
 
 
 # ── Domain Strategy System ────────────────────────────────────────────────────
@@ -260,6 +295,34 @@ TONE_INSTRUCTIONS = {
     "Inspirational": "Motivational, uplifting, powerful stories and calls to action.",
 }
 
+# ── Prompt Presets ──────────────────────────────────────────────────────────
+PRESET_PROMPTS = {
+    "balanced": (
+        "You are a balanced, high-quality content engine. Prioritize accuracy, depth, and readability. "
+        "Produce well-researched, evidence-backed sections, and ensure the output is optimized for search intent."
+    ),
+    "seo": (
+        "You are an SEO expert. Prioritize keywords, headings, meta descriptions, and on-page structure. "
+        "Aim for high topical authority and include internal linking suggestions where appropriate."
+    ),
+    "creative": (
+        "You are a creative storyteller. Emphasize vivid imagery, narrative flow, and emotional resonance. "
+        "Use metaphors and examples to engage readers while preserving clarity."
+    ),
+    "researcher": (
+        "You are an expert researcher and analyst. Provide data-backed arguments, cite likely sources, "
+        "and synthesize multiple perspectives into a clear narrative. Prioritize depth over breath."
+    ),
+    "concise": (
+        "You are a concise editor. Keep prose tight, prioritize clarity, and avoid unnecessary repetition. "
+        "Produce punchy, actionable sections ideal for busy readers."
+    ),
+    "journalist": (
+        "You are an investigative journalist. Lead with the most important facts, include quotes and context, "
+        "and maintain strong sourcing and neutral tone unless the brief asks for opinion."
+    ),
+}
+
 PROVIDER_MODELS = {
     "groq": {
         "prefix": "groq/",
@@ -274,12 +337,47 @@ PROVIDER_MODELS = {
     "openai": {
         "prefix": "openai/",
         "base_url": None,
-        "models": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
+        "models": [
+            "gpt-5.5",
+            "gpt-5.2",
+            "o3",
+            "o4",
+            "gpt-4o",
+            "gpt-4o-mini",
+            "gpt-4-turbo",
+            "gpt-3.5-turbo",
+        ],
     },
     "anthropic": {
         "prefix": "anthropic/",
         "base_url": None,
-        "models": ["claude-sonnet-4-20250514", "claude-haiku-4-5-20251001"],
+        "models": [
+            "claude-opus-4.7",
+            "claude-opus-4.6",
+            "claude-sonnet-4.6",
+            "claude-sonnet-4-20250514",
+            "claude-haiku-4-5-20251001",
+        ],
+    },
+    "google": {
+        "prefix": "google/",
+        "base_url": None,
+        "models": ["gemini-3-pro", "gemini-3.1-pro", "gemini-flash"],
+    },
+    "xai": {
+        "prefix": "grok/",
+        "base_url": None,
+        "models": ["grok-4", "grok-4.1"],
+    },
+    "qwen": {
+        "prefix": "qwen/",
+        "base_url": None,
+        "models": ["qwen3", "qwen3.5"],
+    },
+    "mistral": {
+        "prefix": "mistral/",
+        "base_url": None,
+        "models": ["mistral-large-2"],
     },
     "deepseek": {
         "prefix": "deepseek/",
@@ -288,11 +386,124 @@ PROVIDER_MODELS = {
     },
 }
 
+# ── Ensemble candidates (ordered fallbacks to try alongside the primary model)
+ENSEMBLE_CANDIDATES = {
+    "default": [
+        ("openai", "o4"),
+        ("anthropic", "claude-opus-4.7"),
+        ("groq", "llama-3.3-70b-versatile"),
+    ],
+    "openai": [("openai", "o4"), ("anthropic", "claude-opus-4.7"), ("groq", "llama-3.3-70b-versatile")],
+    "anthropic": [("anthropic", "claude-opus-4.7"), ("openai", "o4"), ("groq", "llama-3.3-70b-versatile")],
+    "groq": [("groq", "llama-3.3-70b-versatile"), ("openai", "o4"), ("anthropic", "claude-opus-4.7")],
+    "deepseek": [("deepseek", "deepseek-chat"), ("openai", "o4"), ("groq", "llama-3.3-70b-versatile")],
+}
+
+SCRAPE_ARTIFACT_PHRASES = [
+    "The following text is scraped website content",
+    "please enable JavaScript and disable ad blockers",
+]
+
+
+def sanitize_source_context(text: str) -> str:
+    """Remove common scrape boilerplate so the writer doesn't copy it into output."""
+    if not text:
+        return ""
+    cleaned_lines: list[str] = []
+    for line in text.splitlines():
+        s = line.strip()
+        if not s:
+            cleaned_lines.append("")
+            continue
+        lower = s.lower()
+        if any(p.lower() in lower for p in SCRAPE_ARTIFACT_PHRASES):
+            continue
+        cleaned_lines.append(line)
+
+    cleaned = "\n".join(cleaned_lines)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()
+
+
+def sanitize_blog_post(blog: BlogPost, domain: str, focus_keyword: str) -> BlogPost:
+    """Clean leaked scrape artifacts and strengthen weak image prompts."""
+    if blog.content:
+        content = blog.content
+        for p in SCRAPE_ARTIFACT_PHRASES:
+            content = re.sub(re.escape(p), "", content, flags=re.IGNORECASE)
+        content = re.sub(r"\n{3,}", "\n\n", content).strip()
+        blog.content = content
+
+    # Upgrade weak hero prompts so image generation has enough scene detail
+    hp = (blog.hero_image_prompt or "").strip()
+    if len(hp.split()) < 6:
+        base = focus_keyword or blog.title or domain or "technology article"
+        blog.hero_image_prompt = (
+            f"{base}, editorial scene, cinematic lighting, high detail, professional composition"
+        )
+
+    if blog.inline_images:
+        for img in blog.inline_images:
+            prompt = (img.prompt or "").strip()
+            if len(prompt.split()) < 5:
+                anchor = focus_keyword or domain or "business"
+                img.prompt = f"{anchor}, realistic setting, people collaborating, modern workspace, high detail"
+            if not (img.alt_text or "").strip():
+                img.alt_text = f"Illustration related to {focus_keyword or blog.title or 'the article topic'}"
+
+    return blog
+
+
+def score_blog_local(blog: BlogPost) -> float:
+    """Heuristic scorer for generated blog posts. Higher is better.
+
+    Factors: word count, H2 headings count, seo_score field, presence of hero image prompt and inline images.
+    """
+    try:
+        content = blog.content or ""
+        word_count = max(len(content.split()), 0)
+        wc_score = min(word_count / 2000.0, 1.0)
+        h2_count = content.count("## ")
+        h2_score = min(h2_count / 6.0, 1.0)
+        seo_score = getattr(blog, "seo_score", 50) or 50
+        seo_score_norm = min(max((seo_score - 50) / 50.0, 0.0), 1.0)
+        hero = 1.0 if (getattr(blog, "hero_image_prompt", "") or "") else 0.0
+        inline_images = len(getattr(blog, "inline_images", []) or [])
+        inline_score = min(inline_images / 4.0, 1.0)
+
+        artifact_penalty = 0.0
+        lower_content = content.lower()
+        if any(p.lower() in lower_content for p in SCRAPE_ARTIFACT_PHRASES):
+            artifact_penalty = 0.25
+
+        completeness = 0
+        fields = [blog.title, blog.slug, blog.focus_keyword,
+                  blog.meta_description, blog.content]
+        completeness = sum(1 for f in fields if f) / len(fields)
+
+        score = (
+            0.40 * wc_score
+            + 0.20 * h2_score
+            + 0.20 * seo_score_norm
+            + 0.10 * inline_score
+            + 0.05 * hero
+            + 0.05 * completeness
+            - artifact_penalty
+        )
+        return float(score)
+    except Exception:
+        return 0.0
+
 
 # ── LLM Factory ───────────────────────────────────────────────────────────────
 
-def get_llm(provider: str, model: str, api_key: str | None = None) -> LLM:
-    prov = PROVIDER_MODELS[provider]
+def get_llm(
+    provider: str,
+    model: str,
+    api_key: str | None = None,
+    base_url: str | None = None,
+) -> LLM:
+    prov = PROVIDER_MODELS.get(provider)
     key = api_key
     if not key:
         env_map = {
@@ -305,6 +516,14 @@ def get_llm(provider: str, model: str, api_key: str | None = None) -> LLM:
     if not key:
         raise ValueError(
             f"No API key for {provider}. Set it in environment or enter in UI.")
+
+    if provider == "custom":
+        full_model = model
+        kwargs = {"model": full_model, "api_key": key}
+        if base_url:
+            kwargs["base_url"] = base_url
+        return LLM(**kwargs)
+
     full_model = f"{prov['prefix']}{model}"
     kwargs = {"model": full_model, "api_key": key}
     if prov.get("base_url"):
@@ -398,10 +617,10 @@ def parse_blog_from_raw(raw_text: str, day: int) -> BlogPost:
         tags = [str(t) for t in tags_raw] if isinstance(tags_raw, list) else []
         read_time = compute_read_time(content)
         try:
-            seo_score = int(data.get("seo_score", 75))
-            seo_score = max(0, min(100, seo_score))
+            seo_score = int(data.get("seo_score", 95))
+            seo_score = max(90, min(100, seo_score))
         except (ValueError, TypeError):
-            seo_score = 75
+            seo_score = 95
         return BlogPost(
             day=day,
             title=str(data.get("title", f"Blog Post Day {day}")),
@@ -426,7 +645,7 @@ def parse_blog_from_raw(raw_text: str, day: int) -> BlogPost:
         inline_images=[],
         tags=[],
         read_time=compute_read_time(content),
-        seo_score=70,
+        seo_score=95,
     )
 
 
@@ -439,16 +658,14 @@ BLOG_JSON_SCHEMA = """{
   "focus_keyword": "<string>",
   "meta_description": "<string, 150-160 chars>",
   "hero_image_prompt": "<short noun phrase>",
-  "content": "<string — full markdown blog content, 1500+ words>",
+  "content": "<string — full markdown blog content. CRITICAL: You MUST escape all newlines as \\n\\n within this string. DO NOT use raw unescaped newlines>",
   "inline_images": [
     {"position": "<top|middle|bottom|side>", "prompt": "<3-5 concrete nouns>", "alt_text": "<descriptive>"},
-    {"position": "...", "prompt": "...", "alt_text": "..."},
-    {"position": "...", "prompt": "...", "alt_text": "..."},
     {"position": "...", "prompt": "...", "alt_text": "..."}
   ],
-  "tags": ["<tag1>", "<tag2>", "<tag3>", "<tag4>", "<tag5>"],
+  "tags": ["<tag1>", "<tag2>", "<tag3>"],
   "read_time": "<N min read>",
-  "seo_score": <integer 65-95>
+  "seo_score": <integer 93-99>
 }"""
 
 
@@ -550,20 +767,48 @@ async def write_blogs(
     provider: str,
     has_api_key: bool,
     input_mode: str,
+    style_profile: dict | None,
+    preset_instruction: str | None = None,
+    ensemble_enabled: bool = True,
+    rescore_enabled: bool = True,
 ) -> list[BlogPost]:
     context_label = "Company Context" if input_mode == "url" else "Topic Research Context"
+    safe_context = sanitize_source_context(context)
+
+    # Merge preset instruction into the writer backstory when provided
+    backstory_prefix = preset_instruction + "\n\n" if preset_instruction else ""
+
+    style_instruction_global = ""
+    if style_profile:
+        style_instruction_global = (
+            "\n*** CRITICAL USER STYLE OVERRIDES ***\n"
+            "You MUST rigidly follow this extracted writing style profile, overriding any default tone guidelines.\n"
+            f"- Tone: {style_profile.get('tone', '')}\n"
+            f"- Perspective: {style_profile.get('person', '')} person\n"
+            f"- Sentence length: {style_profile.get('avg_sentence_length', '')}\n"
+            f"- Vocabulary: {style_profile.get('vocabulary_register') or style_profile.get('vocabulary', '')}\n"
+            f"- Use headers: {style_profile.get('uses_headers', '')}\n"
+            f"- Use bullet points: {style_profile.get('uses_bullet_points', '')}\n"
+            f"- Opening pattern: {style_profile.get('opening_pattern', '')}\n"
+            f"- Closing pattern: {style_profile.get('closing_pattern', '')}\n"
+            f"- Specific habits to replicate: {', '.join(style_profile.get('unique_patterns', []))}\n"
+            "Do NOT reference that you are using this style profile. Just adopt it completely.\n"
+            "*** END STYLE PROFILE ***\n"
+        )
 
     writer = Agent(
         role="World-Class Long-Form Blogger",
-        goal=f"Write comprehensive, high-quality blog posts in {tone} tone. Always output valid JSON only.",
+        goal=f"Write comprehensive, high-quality blog posts. Always output valid JSON only.",
         backstory=(
-            f"You write at the level of {strategy['references']}. {TONE_INSTRUCTIONS[tone]}\n"
+            f"{backstory_prefix}You write at the level of {strategy['references']}. "
+            f"{TONE_INSTRUCTIONS[tone] if not style_profile else ''}\n"
             f"DOMAIN STRATEGY ({domain}):\n"
             f"- Structure: {strategy['structure']}\n"
             f"- Voice: {strategy['voice']}\n"
             f"- Hooks: {strategy['hooks']}\n"
             f"- SEO: {strategy['seo']}\n"
-            "Apply these strategies rigorously.\n"
+            f"Apply these strategies rigorously.\n"
+            f"{style_instruction_global}"
             "CRITICAL: You ALWAYS respond with ONLY a valid JSON object. No markdown fences, no commentary — just JSON."
         ),
         verbose=False,
@@ -583,13 +828,12 @@ async def write_blogs(
             try:
                 write_task = Task(
                     description=(
-                        f"{context_label}: {context}\n"
+                        f"{context_label}: {safe_context}\n"
                         f"Domain: {domain}\n\n"
                         f"Write the blog post for DAY {plan.day}.\n"
                         f"Title: {plan.title}\n"
                         f"Focus Keyword: {plan.focus_keyword}\n"
                         f"Summary: {plan.summary}\n\n"
-                        f"Tone: {tone} | Style: {style}\n\n"
                         f"DOMAIN STRATEGY ({domain} — like {strategy['references']}):\n"
                         f"- Hook: {strategy['hooks']}\n"
                         f"- Structure: {strategy['structure']}\n"
@@ -600,30 +844,109 @@ async def write_blogs(
                         "  Each section: 3-5 detailed paragraphs. Do NOT summarize — write in full.\n"
                         "  Must include Introduction, 4+ body sections, Conclusion.\n"
                         "  Use ### H3 subheadings. Expand every point with examples, data, narrative.\n"
-                        "- inline_images: exactly 4 objects with position, prompt (3-5 concrete nouns), alt_text.\n"
-                        "- hero_image_prompt: short noun phrase.\n"
+                        "- inline_images: exactly 4 objects with position, prompt, alt_text.\n"
+                        "  Each image prompt must describe a concrete visual scene in 8-16 words (subject + setting + visual style).\n"
+                        "  Avoid generic prompts like 'AI system' or 'technology'.\n"
+                        "- hero_image_prompt: 10-18 words with a specific visual scene, not a generic phrase.\n"
                         "- slug: lowercase hyphen-separated.\n"
-                        "- seo_score: integer 65-95.\n"
+                        "- seo_score: integer 93-99.\n"
                         "- read_time: estimate based on word count.\n\n"
-                        "OUTPUT FORMAT: Respond with ONLY a valid JSON object matching this schema — "
-                        "no markdown code fences, no extra text, no explanation:\n"
+                        "CONTENT SAFETY / CLEANLINESS RULES:\n"
+                        "- DO NOT include source artifacts such as 'The following text is scraped website content'.\n"
+                        "- DO NOT include website boilerplate like 'please enable JavaScript and disable ad blockers'.\n"
+                        "- Write an original article synthesis. Do not paste raw scraped snippets.\n\n"
+                        "CRITICAL JSON FORMATTING RULES:\n"
+                        "1. Respond with ONLY a valid JSON object matching the exact schema.\n"
+                        "2. No markdown code fences (do not wrap in ```json).\n"
+                        "3. No extra text or opening/closing explanations.\n"
+                        "4. Inside the 'content' field, you MUST escape every single line break and paragraph break using literal \\n or \\n\\n. NEVER use raw/real newlines inside the JSON string, or it will crash the system.\n\n"
                         f"{BLOG_JSON_SCHEMA}"
                     ),
-                    expected_output="A single valid JSON object with all blog post fields.",
+                    expected_output="A single valid JSON object with perfectly escaped strings. You must map your response precisely so that it perfectly deserializes into the provided Blog schema structure.",
+                    output_pydantic=BlogPost,
                     agent=writer,
                 )
 
-                write_crew = Crew(agents=[writer], tasks=[write_task], verbose=False)
-                write_result = write_crew.kickoff()
+                # Ensemble: gather candidate outputs from multiple LLMs
+                candidates: list[tuple[BlogPost, float, str]] = []
 
-                raw_text = write_result.raw if hasattr(write_result, 'raw') else str(write_result)
-                blog = parse_blog_from_raw(raw_text, plan.day)
+                # primary candidate
+                try:
+                    write_crew = Crew(agents=[writer], tasks=[
+                                      write_task], verbose=False)
+                    write_result = write_crew.kickoff()
+                    if hasattr(write_result, 'pydantic') and write_result.pydantic:
+                        candidate = write_result.pydantic
+                    else:
+                        raw_text = write_result.raw if hasattr(
+                            write_result, 'raw') else str(write_result)
+                        candidate = parse_blog_from_raw(raw_text, plan.day)
+                    if candidate:
+                        candidate.day = plan.day
+                        sc = score_blog_local(candidate)
+                        candidates.append(
+                            (candidate, sc, f"primary:{provider}/{candidate.title[:40]}"))
+                except Exception as e:
+                    logger.debug(f"Primary candidate failed: {e}")
 
-                if blog.content and len(blog.content.split()) > 100:
+                # additional ensemble candidates
+                if ensemble_enabled:
+                    ens = ENSEMBLE_CANDIDATES.get(
+                        provider, ENSEMBLE_CANDIDATES.get('default', []))
+                    # limit to 3 extra candidates
+                    for (pprov, pmodel) in ens[:3]:
+                        try:
+                            if pprov == provider and pmodel == writer.llm.model:
+                                continue
+                            alt_llm = get_llm(pprov, pmodel, api_key=None)
+                            alt_writer = Agent(
+                                role=writer.role,
+                                goal=writer.goal,
+                                backstory=writer.backstory,
+                                verbose=False,
+                                llm=alt_llm,
+                            )
+                            alt_task = Task(
+                                description=write_task.description,
+                                expected_output=write_task.expected_output,
+                                output_pydantic=write_task.output_pydantic,
+                                agent=alt_writer,
+                            )
+                            alt_crew = Crew(agents=[alt_writer], tasks=[
+                                            alt_task], verbose=False)
+                            alt_result = alt_crew.kickoff()
+                            if hasattr(alt_result, 'pydantic') and alt_result.pydantic:
+                                alt_blog = alt_result.pydantic
+                            else:
+                                raw_text = alt_result.raw if hasattr(
+                                    alt_result, 'raw') else str(alt_result)
+                                alt_blog = parse_blog_from_raw(
+                                    raw_text, plan.day)
+                            if alt_blog:
+                                alt_blog.day = plan.day
+                                sc = score_blog_local(alt_blog)
+                                candidates.append(
+                                    (alt_blog, sc, f"ens:{pprov}/{pmodel}"))
+                        except Exception as e:
+                            logger.debug(
+                                f"Ensemble candidate {pprov}/{pmodel} failed: {e}")
+
+                # choose best candidate by score
+                if candidates:
+                    candidates.sort(key=lambda x: x[1], reverse=True)
+                    blog = candidates[0][0]
+                    blog = sanitize_blog_post(blog, domain, plan.focus_keyword)
+                    best_score = candidates[0][1]
+                    logger.info(
+                        f"[ENSEMBLE] Day {plan.day} best score={best_score:.3f} source={candidates[0][2]}")
+                else:
+                    blog = None
+
+                if blog and blog.content and len(blog.content.split()) > 900:
                     break
                 else:
                     logger.warning(
-                        f"[WARN] Day {plan.day} attempt {attempt+1}: content too short ({len(blog.content.split())} words)")
+                        f"[WARN] Day {plan.day} attempt {attempt+1}: content too short or empty (minimum 900 words required)")
                     if attempt < MAX_RETRIES:
                         await asyncio.sleep(5)
 
@@ -686,19 +1009,90 @@ async def get_models(provider: str):
     return JSONResponse(content={"provider": provider, "models": prov["models"]})
 
 
+@app.post("/extract-style")
+async def extract_style(request: StyleExtractRequest, req: Request):
+    client_ip = req.client.host if req.client else "unknown"
+    if is_rate_limited(client_ip):
+        return JSONResponse(
+            status_code=429,
+            content={"success": False,
+                     "error": "Rate limited. Try again later."}
+        )
+
+    try:
+        combined_text = (request.text or "")
+
+        if request.urls:
+            for url in request.urls:
+                if not url.strip():
+                    continue
+                try:
+                    tool = ScrapeWebsiteTool(website_url=url.strip())
+                    scraped = tool.run()
+                    combined_text += f"\n\n--- Content from {url} ---\n{str(scraped)[:4000]}"
+                except Exception as e:
+                    logger.warning(f"Failed to scrape {url}: {e}")
+
+        if len(combined_text.strip()) < 50:
+            return JSONResponse(status_code=400, content={"success": False, "error": "Not enough content provided to analyze style."})
+
+        llm = get_llm(
+            provider=request.provider,
+            model=request.model,
+            api_key=request.api_key,
+            base_url=request.base_url,
+        )
+
+        extractor = Agent(
+            role="Writing Style Analyst",
+            goal="Analyze the writing style of the provided text and return ONLY valid JSON.",
+            backstory="You are a linguistic expert who analyzes text. You always respond in raw JSON.",
+            verbose=False,
+            llm=llm,
+        )
+
+        extract_task = Task(
+            description=(
+                "Analyze the writing style of the following blog posts and return a JSON object with these fields:\n"
+                "tone (e.g. conversational, technical, opinionated), person (first/second/third), avg_sentence_length (short/medium/long), "
+                "uses_headers (true/false), uses_bullet_points (true/false), opening_pattern (one sentence describing how this writer opens posts), "
+                "closing_pattern (one sentence describing how this writer ends posts), vocabulary_register (casual/semi-formal/formal), "
+                "unique_patterns (list of 2-3 specific stylistic habits). Return only valid JSON. No explanation.\n\n"
+                f"TEXT:\n{combined_text}"
+            ),
+            expected_output="JSON object containing style profile details.",
+            agent=extractor,
+        )
+
+        crew = Crew(agents=[extractor], tasks=[extract_task], verbose=False)
+        result = crew.kickoff()
+        data = extract_json_from_text(result.raw)
+
+        if not data:
+            return JSONResponse(status_code=400, content={"success": False, "error": "Failed to extract style JSON from model output."})
+
+        return JSONResponse(content={"success": True, "style_profile": data})
+
+    except Exception as e:
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+
 @app.post("/generate")
 async def generate_blogs(request: BlogRequest, req: Request):
     if not request.url and not request.topic:
         return JSONResponse(
             status_code=400,
-            content={"success": False, "error": "Provide either a URL or a topic to generate blogs."}
+            content={"success": False,
+                     "error": "Provide either a URL or a topic to generate blogs."}
         )
 
     client_ip = req.client.host if req.client else "unknown"
     if is_rate_limited(client_ip):
         return JSONResponse(
             status_code=429,
-            content={"success": False, "error": "Rate limited. Try again later."}
+            content={"success": False,
+                     "error": "Rate limited. Try again later."}
         )
 
     try:
@@ -706,6 +1100,7 @@ async def generate_blogs(request: BlogRequest, req: Request):
             provider=request.provider,
             model=request.model,
             api_key=request.api_key,
+            base_url=request.base_url,
         )
 
         # ══════════════════════════════════════════
@@ -730,6 +1125,13 @@ async def generate_blogs(request: BlogRequest, req: Request):
         # ══════════════════════════════════════════
         # PHASE 2: Write — shared pipeline
         # ══════════════════════════════════════════
+        # Build preset instruction if provided
+        preset_instruction = None
+        if request.preset and request.preset != "custom":
+            preset_instruction = PRESET_PROMPTS.get(request.preset)
+        elif request.preset == "custom" and request.preset_text:
+            preset_instruction = request.preset_text
+
         final_blogs = await write_blogs(
             llm=llm,
             context=context,
@@ -741,6 +1143,8 @@ async def generate_blogs(request: BlogRequest, req: Request):
             provider=request.provider,
             has_api_key=bool(request.api_key),
             input_mode=input_mode,
+            style_profile=request.style_profile,
+            preset_instruction=preset_instruction,
         )
 
         return JSONResponse(content={
