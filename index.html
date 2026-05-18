@@ -19,6 +19,15 @@
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
+      @font-face {
+        font-family: "Paperkind";
+        src:
+          url("Paperkind.ttf") format("truetype"),
+          url("Paperkind.woff") format("woff");
+        font-weight: normal;
+        font-style: normal;
+      }
+
       :root {
         --ink: #0c0c0c;
         --ink2: #151515;
@@ -319,15 +328,15 @@
       }
       .masthead-greeting span {
         color: var(--accent);
-        font-weight: bold;
-        font-family: "Courier New", Courier, monospace;
-        font-size: 1.3rem;
+        font-weight: normal;
+        font-family: "Paperkind", "Courier New", Courier, monospace;
+        font-size: 1.6rem;
         letter-spacing: 0.05em;
         text-shadow: 0 0 10px rgba(232, 197, 71, 0.6);
-        background: rgba(255, 255, 255, 0.1);
-        padding: 2px 8px;
-        border-radius: 3px;
-        box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.5);
+        background: transparent;
+        padding: 0 4px;
+        position: relative;
+        top: 2px;
       }
       @keyframes sparkSlide {
         0% {
@@ -3542,7 +3551,7 @@
 
           const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
 
-          wrap.innerHTML = `${intro}, <span>&nbsp;${name}</span>! ${randomQuote}`;
+          wrap.innerHTML = `${intro}, <span>${name}</span>! ${randomQuote}`;
         }
       }
     </script>
