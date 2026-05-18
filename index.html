@@ -141,6 +141,34 @@
         font-weight: 500;
       }
 
+      .masthead-greeting {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding-left: 24px;
+        font-family: inherit;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
+        opacity: 0;
+        animation: sparkSlide 1s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.3s;
+      }
+      .masthead-greeting span {
+        color: var(--accent);
+        font-weight: 600;
+        text-shadow: 0 0 10px rgba(220, 203, 85, 0.4);
+      }
+      @keyframes sparkSlide {
+        0% {
+          opacity: 0;
+          transform: translateY(-5px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
       .masthead-right {
         display: flex;
         align-items: center;
@@ -1820,6 +1848,7 @@
           <div class="masthead-sub">Content Engine</div>
         </div>
       </div>
+      <div id="greeting-wrapper" class="masthead-greeting"></div>
       <div class="masthead-right">
         <div class="status-dot live" id="status-dot"></div>
         <span class="model-badge live" id="model-badge">Groq · LLaMA 3.3</span>
@@ -3274,6 +3303,37 @@
       document.getElementById("url").addEventListener("keydown", (e) => {
         if (e.key === "Enter") generateBlogs();
       });
+
+      // Greeting Logic
+      document.addEventListener("DOMContentLoaded", () => {
+        let userName = localStorage.getItem("bf_user_name");
+        let isNew = false;
+
+        if (!userName) {
+          isNew = true;
+          setTimeout(() => {
+            userName = prompt(
+              "Welcome to BlogForge!\n\nYou are incredibly important to us. What is your name?",
+            );
+            if (userName && userName.trim() !== "") {
+              localStorage.setItem("bf_user_name", userName.trim());
+            } else {
+              userName = "Valued Creator";
+            }
+            renderGreeting(userName, isNew);
+          }, 300); // slight delay so the page paints first
+        } else {
+          renderGreeting(userName, isNew);
+        }
+      });
+
+      function renderGreeting(name, isNew) {
+        const wrap = document.getElementById("greeting-wrapper");
+        if (wrap) {
+          const intro = isNew ? "Welcome" : "Welcome back";
+          wrap.innerHTML = `${intro}, <span>&nbsp;${name}</span>! You are incredibly valuable to us!! \u2728`;
+        }
+      }
     </script>
   </body>
 </html>
