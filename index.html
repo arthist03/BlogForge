@@ -116,11 +116,72 @@
         justify-content: center;
         flex-shrink: 0;
         box-shadow: 0 2px 10px rgba(232, 197, 71, 0.2);
+        position: relative;
+        overflow: hidden;
       }
 
-      .logo-mark svg {
-        width: 18px;
+      .forge-loader {
+        position: relative;
+        width: 16px;
         height: 18px;
+        perspective: 150px;
+      }
+      .forge-paper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #0c0c0c;
+        border-radius: 2px;
+        padding: 3px 2px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        opacity: 0;
+        animation: pagePrint 2.1s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      }
+      .forge-paper.p1 {
+        animation-delay: 0s;
+      }
+      .forge-paper.p2 {
+        animation-delay: 0.7s;
+      }
+      .forge-paper.p3 {
+        animation-delay: 1.4s;
+      }
+
+      .f-line {
+        height: 2px;
+        background: var(--accent);
+        border-radius: 1px;
+        width: 100%;
+      }
+      .f-line.s {
+        width: 55%;
+      }
+
+      @keyframes pagePrint {
+        0% {
+          transform: translateY(20px) translateZ(-15px) rotateX(-60deg);
+          opacity: 0;
+        }
+        20% {
+          transform: translateY(0) translateZ(0) rotateX(0);
+          opacity: 1;
+        }
+        60% {
+          transform: translateY(0) translateZ(0) rotateX(0);
+          opacity: 1;
+        }
+        80% {
+          transform: translateY(-20px) translateZ(15px) rotateX(60deg);
+          opacity: 0;
+        }
+        100% {
+          opacity: 0;
+        }
       }
 
       .masthead-title {
@@ -1834,14 +1895,23 @@
     <header class="masthead">
       <div class="masthead-left">
         <div class="logo-mark">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path
-              d="M4 6h16M4 10h10M4 14h12M4 18h8"
-              stroke="#0c0c0c"
-              stroke-width="2.2"
-              stroke-linecap="round"
-            />
-          </svg>
+          <div class="forge-loader">
+            <div class="forge-paper p1">
+              <div class="f-line"></div>
+              <div class="f-line"></div>
+              <div class="f-line s"></div>
+            </div>
+            <div class="forge-paper p2">
+              <div class="f-line"></div>
+              <div class="f-line"></div>
+              <div class="f-line s"></div>
+            </div>
+            <div class="forge-paper p3">
+              <div class="f-line"></div>
+              <div class="f-line"></div>
+              <div class="f-line s"></div>
+            </div>
+          </div>
         </div>
         <div>
           <div class="masthead-title">BlogForge</div>
@@ -3331,7 +3401,38 @@
         const wrap = document.getElementById("greeting-wrapper");
         if (wrap) {
           const intro = isNew ? "Welcome" : "Welcome back";
-          wrap.innerHTML = `${intro}, <span>&nbsp;${name}</span>! You are incredibly valuable to us!! \u2728`;
+
+          const quotes = [
+            "We believe in your boundless creativity!",
+            "BlogForge is honored to power your ideas today.",
+            "You are an exceptional creator, let's build something great!",
+            "Your words have the power to change the world.",
+            "BlogForge exists for talented minds like yours.",
+            "Bring your brilliance. BlogForge will handle the rest.",
+            "You are incredibly valuable to us! \u2728",
+            "Every masterpiece starts with a spark of your imagination.",
+            "BlogForge loves your unique perspective!",
+            "Your potential as a writer is limitless today.",
+            "We're thrilled to see what you will Forge next.",
+            "Your voice matters, and BlogForge is here to amplify it.",
+            "Outstanding creators like you make BlogForge shine.",
+            "There is no limit to what you can achieve today.",
+            "BlogForge celebrates your incredible creative journey.",
+            "Your ideas belong in the spotlight.",
+            "Write fearlessly, for your potential is unmatched.",
+            "BlogForge is your canvas, and your mind is an absolute masterpiece.",
+            "You have a gift for storytelling—let's Forge it!",
+            "Incredible things happen when you start typing.",
+            "You are the true engine behind BlogForge's magic.",
+            "Your creative energy is truly inspiring!",
+            "BlogForge is ready for your next big breakthrough.",
+            "Nothing can stop your incredible creative momentum.",
+            "Keep shining, keep writing, keep being amazing.",
+          ];
+
+          const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+
+          wrap.innerHTML = `${intro}, <span>&nbsp;${name}</span>! ${randomQuote}`;
         }
       }
     </script>
